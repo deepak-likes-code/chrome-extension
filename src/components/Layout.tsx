@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import FolderGrid from "./FolderGrid";
 import BookmarkGrid from "./BookmarkGrid";
 import TodoList from "./TodoList";
-import Spline from "@splinetool/react-spline";
+import BackgroundSelector from "./BackgroundSelector";
 
 const MacOSLayout: React.FC = () => {
   const [backgroundImage, setBackgroundImage] =
@@ -13,7 +13,6 @@ const MacOSLayout: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
-    // Load the saved background image when the component mounts
     chrome.storage.local.get(["backgroundImage"], (result) => {
       if (result.backgroundImage) {
         setBackgroundImage(result.backgroundImage);
@@ -36,45 +35,33 @@ const MacOSLayout: React.FC = () => {
     };
   }, []);
 
-  const handleBackgroundChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const newBackgroundImage = e.target?.result as string;
-        setBackgroundImage(newBackgroundImage);
-        // Save the new background image to Chrome's local storage
-        chrome.storage.local.set(
-          { backgroundImage: newBackgroundImage },
-          () => {
-            console.log("Background image saved");
-          }
-        );
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleBackgroundChange = useCallback((newBackgroundImage: string) => {
+    setBackgroundImage(newBackgroundImage);
+    chrome.storage.local.set({ backgroundImage: newBackgroundImage }, () => {
+      console.log("Background image saved");
+    });
+  }, []);
 
   return (
     <DndProvider backend={HTML5Backend}>
       <div
-        className="h-screen w-screen overflow-hidden flex justify-stretch "
+        className="h-screen w-screen overflow-hidden flex justify-stretch relative"
         style={{
           backgroundImage: `url(${backgroundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
-        {/* <Spline scene="https://prod.spline.design/pBTlg1jNgQI3Pfsc/scene.splinecode" /> */}
+        {/* Dark filter overlay */}
+        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
+
         <div className="w-full"></div>
 
-        <div className="flex w-1/2 flex-col px-2 mt-4">
+        <div className="flex w-1/2 flex-col px-2 mt-4 relative z-10">
           <div className="flex flex-col max-h-[50vh] ">
             <TodoList />
           </div>
-          <div className=" flex ">
+          <div className="flex">
             {selectedFolder === null ? (
               <FolderGrid
                 onSelectFolder={setSelectedFolder}
@@ -88,14 +75,9 @@ const MacOSLayout: React.FC = () => {
               />
             )}
           </div>
-
-          <input
-            type="file"
-            onChange={handleBackgroundChange}
-            className="absolute bottom-4 right-4"
-            accept="image/*"
-          />
         </div>
+
+        <BackgroundSelector onBackgroundChange={handleBackgroundChange} />
       </div>
     </DndProvider>
   );
