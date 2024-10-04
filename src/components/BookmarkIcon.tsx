@@ -63,7 +63,7 @@ export const BookmarkIcon: React.FC<{
         href={bookmark.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-16 h-16 bg-gray-200 flex items-center justify-center rounded"
+        className="w-16 h-16 bg-gray-500 flex items-center justify-center rounded"
         onClick={(e) => isEditing && e.preventDefault()}
       >
         <span className="text-2xl">🔖</span>
@@ -79,7 +79,7 @@ export const BookmarkIcon: React.FC<{
           autoFocus
         />
       ) : (
-        <span className="text-xs mt-1 text-center overflow-hidden">
+        <span className="text-xs text-white font-medium mt-1 text-center overflow-hidden">
           {bookmark.title}
         </span>
       )}

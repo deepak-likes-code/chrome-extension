@@ -1,14 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "Todo List & Bookmark Manager",
+  "name": "New Tab",
   "version": "1.0",
   "description": "A simple todo list and bookmark manager extension",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "permissions": ["storage", "bookmarks", "contextMenus", "activeTab"],
+  "permissions": [
+    "storage",
+    "bookmarks",
+    "contextMenus",
+    "activeTab",
+    "notifications"
+  ],
   "background": {
     "service_worker": "background.js"
   },
-  "icons": {}
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
 }

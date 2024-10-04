@@ -27,7 +27,7 @@ const AddBookmarkIcon: React.FC<{ onAddBookmark: () => void }> = ({
       <div className="w-16 h-16 bg-blue-200 flex items-center justify-center rounded">
         <span className="text-2xl">+</span>
       </div>
-      <span className="text-xs mt-1 text-center overflow-hidden">
+      <span className="text-xs mt-1 text-center overflow-hidden text-white">
         Add Bookmark
       </span>
     </div>
@@ -107,14 +107,14 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   );
 
   return (
-    <div ref={drop} className="flex-1 p-4 overflow-auto">
+    <div ref={drop} className="flex-1 p-4 w-full overflow-auto">
       <button
         onClick={onBackToFolders}
         className="mb-4 bg-blue-500 text-white p-2 rounded"
       >
         Back to Folders
       </button>
-      <div className="grid grid-cols-6 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         {filteredBookmarks.map((bookmark) => (
           <BookmarkIcon
             key={bookmark.id}

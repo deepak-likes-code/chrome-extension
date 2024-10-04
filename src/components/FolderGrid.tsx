@@ -16,7 +16,7 @@ const AddFolderIcon: React.FC<{ onAddFolder: () => void }> = ({
       <div className="w-16 h-16 bg-gray-700 flex items-center justify-center rounded">
         <span className="text-4xl">+</span>
       </div>
-      <span className="text-xs mt-1 text-center overflow-hidden">
+      <span className="text-xs mt-1 text-white text-center overflow-hidden">
         Add Folder
       </span>
     </div>
