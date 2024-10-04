@@ -52,13 +52,25 @@ const Timer: React.FC<TimerProps> = ({
     setIsPaused(!isPaused);
   };
 
+  const handleClose = () => {
+    onCancel();
+  };
+
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 rounded-lg shadow-lg p-6 text-center cursor-pointer hover:bg-opacity-100 transition-all duration-300">
+    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 rounded-lg shadow-lg p-6 text-center hover:bg-opacity-100 transition-all duration-300">
       <h2 className="text-2xl font-bold mb-4">{title}</h2>
       {isCompleted ? (
-        <div className="text-4xl font-bold text-green-600 mb-4">
-          Mission Accomplished!
-        </div>
+        <>
+          <div className="text-4xl font-bold text-green-600 mb-4">
+            Mission Accomplished!
+          </div>
+          <button
+            onClick={handleClose}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Close
+          </button>
+        </>
       ) : (
         <>
           <div className="text-6xl font-mono mb-4">{formatTime(timeLeft)}</div>
