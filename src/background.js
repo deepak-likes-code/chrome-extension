@@ -22,7 +22,6 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       bookmarks.push(newBookmark);
       chrome.storage.local.set({ bookmarks }, () => {
         console.log("Bookmark added:", newBookmark);
-        // Send a message to the content script or popup
         chrome.tabs.query(
           { active: true, currentWindow: true },
           function (tabs) {
@@ -42,6 +41,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     chrome.storage.local.get(["bookmarks"], (result) => {
       sendResponse({ bookmarks: result.bookmarks || [] });
     });
-    return true; // Indicates that the response is sent asynchronously
+    return true;
+  } else if (request.action === "createTimerNotification") {
+    chrome.notifications.create({
+      type: "basic",
+      iconUrl: "icons/icon48.png",
+      title: "Timer Finished",
+      message: `${request.title} timer has finished!`,
+    });
+    return true;
   }
 });

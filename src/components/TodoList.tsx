@@ -45,18 +45,18 @@ const TodoList: React.FC = () => {
   };
 
   return (
-    <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg flex flex-col min-h-64">
+    <div className="bg-white bg-opacity-60 p-6 rounded-lg shadow-lg flex flex-col min-h-64">
       <div className="mb-6 flex">
         <input
           type="text"
           value={newTodo}
           onChange={(e) => setNewTodo(e.target.value)}
           placeholder="Add a new todo"
-          className="flex-grow p-3 text-md border-2 border-gray-300 rounded-l-lg focus:outline-none focus:border-blue-500"
+          className="flex-grow p-3 text-md border-2 border-gray-300 rounded-l-lg focus:outline-none focus:border-gray-500"
         />
         <button
           onClick={addTodo}
-          className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold p-3 rounded-r-lg transition duration-200"
+          className="bg-gray-600 hover:bg-blue-600 text-white text-xl font-bold p-3 rounded-r-lg transition duration-200"
         >
           +
         </button>
