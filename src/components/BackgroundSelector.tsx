@@ -23,8 +23,19 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
     [onBackgroundChange]
   );
 
+  const handleDefaultBackground = useCallback(() => {
+    onBackgroundChange("../assets/images/bg.jpg");
+  }, [onBackgroundChange]);
+
   return (
-    <div className="fixed bottom-4 right-4">
+    <div className="fixed bottom-4 right-4 flex items-center gap-2">
+      <button
+        onClick={handleDefaultBackground}
+        className="px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"
+      >
+        <span className="text-white text-sm">Default BG</span>
+      </button>
+
       <label
         htmlFor="bg-upload"
         className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"

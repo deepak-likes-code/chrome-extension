@@ -9,9 +9,8 @@ import TimerModal from "./TimerModal";
 import Timer from "./Timer";
 
 const MacOSLayout: React.FC = () => {
-  const [backgroundImage, setBackgroundImage] = useState<string>(
-    "../../public/bg.jpg"
-  );
+  const [backgroundImage, setBackgroundImage] =
+    useState<string>("../assets/bg.jpg");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
@@ -58,25 +57,25 @@ const MacOSLayout: React.FC = () => {
     const endTime =
       Date.now() +
       hours * 60 * 60 * 1000 +
-      seconds * 1000 +
-      minutes * 60 * 1000;
+      minutes * 60 * 1000 +
+      seconds * 1000;
     setTimer({ title, endTime });
-    setIsTimerModalOpen(false); // Close the modal after setting the timer
+    setIsTimerModalOpen(false);
   };
 
   const handleTimerEnd = () => {
-    // setTimer(null);
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icon48.png",
-      title: "Timer Finished",
-      message: `${timer?.title} timer has finished!`,
+    chrome.runtime.sendMessage({
+      action: "createTimerNotification",
+      title: timer?.title,
     });
+    // Optionally, you can set the timer to null here if you want to remove it from the UI
+    // setTimer(null);
   };
 
   const handleCancelTimer = () => {
     setTimer(null);
   };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div
@@ -92,7 +91,7 @@ const MacOSLayout: React.FC = () => {
         <div className="w-full"></div>
 
         <div className="flex w-1/2 flex-col px-2 mt-4 relative z-10">
-          <div className="flex flex-col max-h-[50vh] ">
+          <div className="flex flex-col max-h-[50vh]">
             <TodoList />
           </div>
           <div className="flex">
@@ -110,7 +109,7 @@ const MacOSLayout: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center mt-4">
             <button
               onClick={() => setIsTimerModalOpen(true)}
               className="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 transition-colors"
