@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Todo List & Bookmark Manager",
+  "version": "1.0",
+  "description": "A simple todo list and bookmark manager extension",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": ["storage", "bookmarks", "contextMenus", "activeTab"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {}
+}
