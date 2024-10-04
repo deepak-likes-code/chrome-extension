@@ -45,45 +45,44 @@ const TodoList: React.FC = () => {
   };
 
   return (
-    <div
-      className=" bg-white bg-opacity-80 p-4 rounded flex flex-col min-h-64"
-      style={{ minHeight: "16rem" }}
-    >
-      {/* <h2 className="text-xl mb-4">Todo List</h2> */}
-      <div className="mb-4 flex">
+    <div className="bg-white bg-opacity-90 p-6 rounded-lg shadow-lg flex flex-col min-h-64">
+      <div className="mb-6 flex">
         <input
           type="text"
           value={newTodo}
           onChange={(e) => setNewTodo(e.target.value)}
           placeholder="Add a new todo"
-          className="flex-grow p-2 text-md border rounded-l"
+          className="flex-grow p-3 text-md border-2 border-gray-300 rounded-l-lg focus:outline-none focus:border-blue-500"
         />
         <button
           onClick={addTodo}
-          className="bg-blue-500 text-white p-2 rounded-r"
+          className="bg-blue-500 hover:bg-blue-600 text-white text-xl font-bold p-3 rounded-r-lg transition duration-200"
         >
           +
         </button>
       </div>
-      <ul className="overflow-auto flex-grow text-md">
+      <ul className="overflow-auto flex-grow text-md space-y-4">
         {todos.map((todo) => (
-          <li key={todo.id} className="flex items-center mb-2">
+          <li
+            key={todo.id}
+            className="flex items-center bg-gray-100 p-4 rounded-lg"
+          >
             <input
               type="checkbox"
               checked={todo.completed}
               onChange={() => toggleTodo(todo.id)}
-              className="mr-2"
+              className="mr-4 w-6 h-6"
             />
             <span
               className={`flex-grow text-md ${
-                todo.completed ? "line-through" : ""
+                todo.completed ? "line-through text-gray-500" : "text-gray-800"
               }`}
             >
               {todo.text}
             </span>
             <button
               onClick={() => deleteTodo(todo.id)}
-              className="ml-2 text-red-500"
+              className="ml-4 text-red-500 hover:text-red-700 text-xl transition duration-200"
             >
               🗑️
             </button>
