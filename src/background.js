@@ -46,30 +46,50 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
+function getBaseDomain(hostname) {
+  const parts = hostname.split(".");
+  if (parts.length > 2) {
+    return parts.slice(-2).join(".");
+  }
+  return hostname;
+}
+
 // Helper function to check if a hostname is a search engine
 function isSearchEngine(hostname) {
   const searchEngines = ["google", "bing", "yahoo", "duckduckgo", "baidu"];
   return searchEngines.some((engine) => hostname.includes(engine));
 }
 
-// Helper function to determine if a URL should be blocked
 function shouldBlockUrl(url, blocklist) {
   const hostname = url.hostname;
+  const baseDomain = getBaseDomain(hostname);
 
-  // Don't block search engine results pages
   if (isSearchEngine(hostname)) {
     console.log("Search engine detected, not blocking:", hostname);
     return false;
   }
 
-  // Check if the hostname matches any blocklist item
-  return blocklist.some((item) => {
-    if (hostname === item || hostname.endsWith(`.${item}`)) {
-      console.log("Blocking match found:", item, "for hostname:", hostname);
+  for (const blockedItem of blocklist) {
+    const blockedBaseDomain = getBaseDomain(blockedItem);
+
+    if (
+      hostname === blockedItem ||
+      baseDomain === blockedBaseDomain ||
+      hostname.endsWith(`.${blockedItem}`) ||
+      blockedItem.endsWith(`.${baseDomain}`)
+    ) {
+      console.log(
+        "Blocking match found:",
+        blockedItem,
+        "for hostname:",
+        hostname
+      );
       return true;
     }
-    return false;
-  });
+  }
+
+  console.log("URL not blocked:", hostname);
+  return false;
 }
 
 // Handle messages from content scripts and popup
@@ -105,24 +125,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Handle navigation events
 chrome.webNavigation.onBeforeNavigate.addListener((details) => {
-  // Ignore navigation within the extension itself
-  if (details.url.startsWith(chrome.runtime.getURL(""))) {
-    return;
-  }
+  if (details.frameId !== 0) return; // Only handle main frame navigation
 
-  chrome.storage.sync.get(["blocklist"], (result) => {
+  chrome.storage.sync.get(["blocklist", "blockedSites"], (result) => {
     const blocklist = result.blocklist || [];
+    const blockedSites = result.blockedSites || [];
+
     try {
       const url = new URL(details.url);
       console.log("Checking URL:", url.hostname);
-      console.log("Current blocklist:", blocklist);
 
       if (shouldBlockUrl(url, blocklist)) {
         console.log("Blocking URL:", url.hostname);
+
+        // Update blocked sites count
+        const existingSiteIndex = blockedSites.findIndex(
+          (site) => site.hostname === url.hostname
+        );
+        if (existingSiteIndex !== -1) {
+          blockedSites[existingSiteIndex].blockedCount++;
+        } else {
+          blockedSites.push({ hostname: url.hostname, blockedCount: 1 });
+        }
+
+        chrome.storage.sync.set({ blockedSites }, () => {
+          console.log("Updated blockedSites:", blockedSites);
+        });
+
         chrome.tabs.update(details.tabId, {
-          url: chrome.runtime.getURL("blocked.html"),
+          url: chrome.runtime.getURL(
+            `blocked.html?url=${encodeURIComponent(details.url)}`
+          ),
         });
       } else {
         console.log("URL not blocked:", url.hostname);

@@ -26,6 +26,16 @@ function checkSearchResults() {
   );
 }
 
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "checkIfBlocked") {
+    sendResponse({
+      isBlocked: window.location.href.includes(
+        chrome.runtime.getURL("blocked.html")
+      ),
+    });
+  }
+});
+
 // Run the check when the page loads
 checkSearchResults();
 
