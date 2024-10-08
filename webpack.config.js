@@ -6,6 +6,7 @@ module.exports = {
   entry: {
     main: "./src/index.tsx",
     background: "./src/background.js",
+    content: "./src/content.js",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -36,6 +37,7 @@ module.exports = {
       patterns: [
         { from: "manifest.json", to: "manifest.json" },
         { from: "icons", to: "icons" },
+        { from: "src/blocked.html", to: "blocked.html" },
       ],
     }),
   ],

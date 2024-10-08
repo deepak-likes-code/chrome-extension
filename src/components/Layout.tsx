@@ -7,6 +7,7 @@ import TodoList from "./TodoList";
 import BackgroundSelector from "./BackgroundSelector";
 import TimerModal from "./TimerModal";
 import Timer from "./Timer";
+import BlocklistManager from "./BlockList";
 
 const MacOSLayout: React.FC = () => {
   const [backgroundImage, setBackgroundImage] =
@@ -17,6 +18,7 @@ const MacOSLayout: React.FC = () => {
   const [timer, setTimer] = useState<{ title: string; endTime: number } | null>(
     null
   );
+  const [showBlocklist, setShowBlocklist] = useState(false);
 
   const handleBackgroundChange = useCallback((newBackgroundImage: string) => {
     setBackgroundImage(newBackgroundImage);
@@ -116,7 +118,15 @@ const MacOSLayout: React.FC = () => {
             >
               Add Timer
             </button>
+            <button
+              onClick={() => setShowBlocklist(!showBlocklist)}
+              className="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 transition-colors"
+            >
+              {showBlocklist ? "Hide Blocklist" : "Show Blocklist"}
+            </button>
           </div>
+
+          {showBlocklist && <BlocklistManager />}
         </div>
 
         {timer && (
