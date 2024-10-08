@@ -37,6 +37,7 @@ module.exports = {
       patterns: [
         { from: "manifest.json", to: "manifest.json" },
         { from: "icons", to: "icons" },
+        { from: "audio", to: "audio" },
         { from: "src/blocked.html", to: "blocked.html" },
       ],
     }),

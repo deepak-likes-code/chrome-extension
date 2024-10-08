@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Pause, Play, X } from "react-feather";
 
 interface TimerProps {
@@ -18,6 +18,12 @@ const Timer: React.FC<TimerProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
 
+  const updateTimerState = useCallback(() => {
+    chrome.storage.local.set({
+      timerState: { title, endTime, isPaused, isCompleted },
+    });
+  }, [title, endTime, isPaused, isCompleted]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
@@ -28,11 +34,11 @@ const Timer: React.FC<TimerProps> = ({
           clearInterval(interval);
           setTimeLeft(0);
           setIsCompleted(true);
-          onTimerEnd();
           chrome.runtime.sendMessage({
             action: "createTimerNotification",
             title: title,
           });
+          onTimerEnd();
         } else {
           setTimeLeft(newTimeLeft);
         }
@@ -43,14 +49,10 @@ const Timer: React.FC<TimerProps> = ({
   }, [endTime, onTimerEnd, isPaused, isCompleted, title]);
 
   useEffect(() => {
-    // Save timer state to chrome.storage.local
-    chrome.storage.local.set({
-      timerState: { title, endTime, isPaused, isCompleted },
-    });
-  }, [title, endTime, isPaused, isCompleted]);
+    updateTimerState();
+  }, [updateTimerState]);
 
   useEffect(() => {
-    // Listen for messages from background script
     const messageListener = (
       message: any,
       sender: chrome.runtime.MessageSender,
@@ -65,13 +67,21 @@ const Timer: React.FC<TimerProps> = ({
 
     chrome.runtime.onMessage.addListener(messageListener);
 
-    // Initial sync of timer state
-    chrome.storage.local.get(["timerState"], (result) => {
-      if (result.timerState) {
-        setIsPaused(result.timerState.isPaused);
-        setIsCompleted(result.timerState.isCompleted);
-      }
-    });
+    // Initialize timer state
+    const initializeTimerState = () => {
+      chrome.storage.local.get(["timerState"], (result) => {
+        if (result.timerState) {
+          setTimeLeft(result.timerState.endTime - Date.now());
+          setIsPaused(result.timerState.isPaused);
+          setIsCompleted(result.timerState.isCompleted);
+        }
+      });
+    };
+
+    initializeTimerState();
+
+    // Notify background script that the timer component is ready
+    chrome.runtime.sendMessage({ action: "timerComponentReady" });
 
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
@@ -91,17 +101,10 @@ const Timer: React.FC<TimerProps> = ({
   const togglePause = () => {
     const newPausedState = !isPaused;
     setIsPaused(newPausedState);
-    chrome.storage.local.set(
-      {
-        timerState: { title, endTime, isPaused: newPausedState, isCompleted },
-      },
-      () => {
-        chrome.runtime.sendMessage({
-          action: "updateTimerPause",
-          isPaused: newPausedState,
-        });
-      }
-    );
+    chrome.runtime.sendMessage({
+      action: "updateTimerPause",
+      isPaused: newPausedState,
+    });
   };
 
   const handleClose = () => {

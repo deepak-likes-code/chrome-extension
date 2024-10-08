@@ -84,17 +84,22 @@ const MacOSLayout: React.FC = () => {
     chrome.storage.local.set({ timerState: newTimerState }, () => {
       console.log("Timer state saved");
     });
+    chrome.runtime.sendMessage({
+      action: "setTimerAlarm",
+      alarmName: "timerAlarm",
+      when: endTime,
+    });
+
     setIsTimerModalOpen(false);
   };
 
   const handleTimerEnd = () => {
-    chrome.runtime.sendMessage({
-      action: "createTimerNotification",
-      title: timer?.title,
-    });
-    // Clear the timer state from storage when it ends
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
+    });
+    chrome.runtime.sendMessage({
+      action: "clearTimerAlarm",
+      alarmName: "timerAlarm",
     });
     setTimer(null);
   };
@@ -102,6 +107,10 @@ const MacOSLayout: React.FC = () => {
   const handleCancelTimer = () => {
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
+    });
+    chrome.runtime.sendMessage({
+      action: "clearTimerAlarm",
+      alarmName: "timerAlarm",
     });
     setTimer(null);
   };

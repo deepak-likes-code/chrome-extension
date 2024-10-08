@@ -4,6 +4,12 @@ const BLOCKED_STYLE = {
   color: "red",
 };
 
+chrome.runtime.sendMessage({ action: "registerTab" }, (response) => {
+  if (response && response.success) {
+    console.log("Tab registered successfully");
+  }
+});
+
 // Helper Functions
 function getSearchResultLinks() {
   const links = document.querySelectorAll('a[href^="http"]');

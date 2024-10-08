@@ -9,7 +9,10 @@
     "contextMenus",
     "activeTab",
     "notifications",
-    "webNavigation"
+    "webNavigation",
+    "alarms",
+    "scripting",
+    "tts"
   ],
   "host_permissions": ["<all_urls>"],
   "chrome_url_overrides": {
@@ -42,7 +45,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["blocked.html"],
+      "resources": ["blocked.html", "audio/notification.wav"],
       "matches": ["<all_urls>"]
     }
   ]
