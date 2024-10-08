@@ -9,15 +9,20 @@ import TimerModal from "./TimerModal";
 import Timer from "./Timer";
 import BlocklistManager from "./BlockList";
 
+interface TimerState {
+  title: string;
+  endTime: number;
+  isPaused: boolean;
+  isCompleted: boolean;
+}
+
 const MacOSLayout: React.FC = () => {
   const [backgroundImage, setBackgroundImage] =
     useState<string>("../assets/bg.jpg");
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
-  const [timer, setTimer] = useState<{ title: string; endTime: number } | null>(
-    null
-  );
+  const [timer, setTimer] = useState<TimerState | null>(null);
   const [showBlocklist, setShowBlocklist] = useState(false);
 
   const handleBackgroundChange = useCallback((newBackgroundImage: string) => {
@@ -28,9 +33,12 @@ const MacOSLayout: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    chrome.storage.local.get(["backgroundImage"], (result) => {
+    chrome.storage.local.get(["backgroundImage", "timerState"], (result) => {
       if (result.backgroundImage) {
         setBackgroundImage(result.backgroundImage);
+      }
+      if (result.timerState) {
+        setTimer(result.timerState);
       }
     });
 
@@ -38,8 +46,13 @@ const MacOSLayout: React.FC = () => {
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
     ) => {
-      if (areaName === "local" && (changes.bookmarks || changes.folders)) {
-        setRefreshTrigger((prev) => prev + 1);
+      if (areaName === "local") {
+        if (changes.bookmarks || changes.folders) {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+        if (changes.timerState) {
+          setTimer(changes.timerState.newValue);
+        }
       }
     };
 
@@ -61,7 +74,16 @@ const MacOSLayout: React.FC = () => {
       hours * 60 * 60 * 1000 +
       minutes * 60 * 1000 +
       seconds * 1000;
-    setTimer({ title, endTime });
+    const newTimerState: TimerState = {
+      title,
+      endTime,
+      isPaused: false,
+      isCompleted: false,
+    };
+    setTimer(newTimerState);
+    chrome.storage.local.set({ timerState: newTimerState }, () => {
+      console.log("Timer state saved");
+    });
     setIsTimerModalOpen(false);
   };
 
@@ -70,11 +92,17 @@ const MacOSLayout: React.FC = () => {
       action: "createTimerNotification",
       title: timer?.title,
     });
-    // Optionally, you can set the timer to null here if you want to remove it from the UI
-    // setTimer(null);
+    // Clear the timer state from storage when it ends
+    chrome.storage.local.remove("timerState", () => {
+      console.log("Timer state cleared");
+    });
+    setTimer(null);
   };
 
   const handleCancelTimer = () => {
+    chrome.storage.local.remove("timerState", () => {
+      console.log("Timer state cleared");
+    });
     setTimer(null);
   };
 

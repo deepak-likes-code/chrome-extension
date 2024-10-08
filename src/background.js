@@ -1,50 +1,6 @@
-// Initialize extension on installation
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "addToBookmarks",
-    title: "Add to Bookmarks",
-    contexts: ["page", "link"],
-  });
+let timerInterval;
 
-  // Initialize blocklist if it doesn't exist
-  chrome.storage.sync.get(["blocklist"], (result) => {
-    if (!result.blocklist) {
-      chrome.storage.sync.set({ blocklist: [] }, () => {
-        console.log("Initialized empty blocklist");
-      });
-    } else {
-      console.log("Existing blocklist:", result.blocklist);
-    }
-  });
-});
-
-// Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "addToBookmarks") {
-    const url = info.linkUrl || info.pageUrl;
-    const title = tab?.title || url;
-
-    chrome.storage.local.get(["bookmarks"], (result) => {
-      const bookmarks = result.bookmarks || [];
-      const newBookmark = {
-        id: Date.now().toString(),
-        url: url,
-        title: title,
-        folderId: null,
-      };
-      bookmarks.push(newBookmark);
-      chrome.storage.local.set({ bookmarks }, () => {
-        console.log("Bookmark added:", newBookmark);
-        if (tab?.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            action: "bookmarkAdded",
-            bookmark: newBookmark,
-          });
-        }
-      });
-    });
-  }
-});
+//helper functions
 
 function getBaseDomain(hostname) {
   const parts = hostname.split(".");
@@ -92,6 +48,94 @@ function shouldBlockUrl(url, blocklist) {
   return false;
 }
 
+function updateTimer() {
+  chrome.storage.local.get(["timerState"], (result) => {
+    const timerState = result.timerState;
+    if (timerState && !timerState.isCompleted) {
+      const timeLeft = timerState.endTime - Date.now();
+      if (timeLeft <= 0) {
+        timerState.isCompleted = true;
+        chrome.storage.local.set({ timerState });
+        chrome.notifications.create({
+          type: "basic",
+          iconUrl: "icons/icon48.png",
+          title: "Timer Finished",
+          message: `${timerState.title} timer has finished!`,
+        });
+      }
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach((tab) => {
+          chrome.tabs.sendMessage(tab.id, {
+            action: "updateTimer",
+            timeLeft: Math.max(0, timeLeft),
+            isPaused: timerState.isPaused,
+            isCompleted: timerState.isCompleted,
+          });
+        });
+      });
+    }
+  });
+}
+
+function startTimerInterval() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 1000);
+}
+
+// Initialize extension on installation
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "addToBookmarks",
+    title: "Add to Bookmarks",
+    contexts: ["page", "link"],
+  });
+
+  // Initialize blocklist if it doesn't exist
+  chrome.storage.sync.get(["blocklist"], (result) => {
+    if (!result.blocklist) {
+      chrome.storage.sync.set({ blocklist: [] }, () => {
+        console.log("Initialized empty blocklist");
+      });
+    } else {
+      console.log("Existing blocklist:", result.blocklist);
+    }
+  });
+
+  startTimerInterval();
+});
+
+chrome.tabs.onCreated.addListener((tab) => {
+  updateTimer();
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "addToBookmarks") {
+    const url = info.linkUrl || info.pageUrl;
+    const title = tab?.title || url;
+
+    chrome.storage.local.get(["bookmarks"], (result) => {
+      const bookmarks = result.bookmarks || [];
+      const newBookmark = {
+        id: Date.now().toString(),
+        url: url,
+        title: title,
+        folderId: null,
+      };
+      bookmarks.push(newBookmark);
+      chrome.storage.local.set({ bookmarks }, () => {
+        console.log("Bookmark added:", newBookmark);
+        if (tab?.id) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: "bookmarkAdded",
+            bookmark: newBookmark,
+          });
+        }
+      });
+    });
+  }
+});
+
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getBookmarks") {
@@ -107,6 +151,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       message: `${request.title} timer has finished!`,
     });
     return true;
+  } else if (request.action === "updateTimerPause") {
+    chrome.storage.local.get(["timerState"], (result) => {
+      const timerState = result.timerState;
+      if (timerState) {
+        timerState.isPaused = request.isPaused;
+        chrome.storage.local.set({ timerState });
+        updateTimer();
+      }
+    });
+  } else if (request.action === "cancelTimer") {
+    chrome.storage.local.remove(["timerState"]);
+    clearInterval(timerInterval);
   } else if (request.action === "checkSearchResults") {
     chrome.storage.sync.get(["blocklist"], (result) => {
       const blocklist = result.blocklist || [];
