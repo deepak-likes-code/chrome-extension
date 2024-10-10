@@ -1,51 +1,7 @@
-// Initialize extension on installation
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "addToBookmarks",
-    title: "Add to Bookmarks",
-    contexts: ["page", "link"],
-  });
+let timerInterval;
+let registeredTabs = new Set();
 
-  // Initialize blocklist if it doesn't exist
-  chrome.storage.sync.get(["blocklist"], (result) => {
-    if (!result.blocklist) {
-      chrome.storage.sync.set({ blocklist: [] }, () => {
-        console.log("Initialized empty blocklist");
-      });
-    } else {
-      console.log("Existing blocklist:", result.blocklist);
-    }
-  });
-});
-
-// Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === "addToBookmarks") {
-    const url = info.linkUrl || info.pageUrl;
-    const title = tab?.title || url;
-
-    chrome.storage.local.get(["bookmarks"], (result) => {
-      const bookmarks = result.bookmarks || [];
-      const newBookmark = {
-        id: Date.now().toString(),
-        url: url,
-        title: title,
-        folderId: null,
-      };
-      bookmarks.push(newBookmark);
-      chrome.storage.local.set({ bookmarks }, () => {
-        console.log("Bookmark added:", newBookmark);
-        if (tab?.id) {
-          chrome.tabs.sendMessage(tab.id, {
-            action: "bookmarkAdded",
-            bookmark: newBookmark,
-          });
-        }
-      });
-    });
-  }
-});
-
+// Helper functions
 function getBaseDomain(hostname) {
   const parts = hostname.split(".");
   if (parts.length > 2) {
@@ -54,10 +10,22 @@ function getBaseDomain(hostname) {
   return hostname;
 }
 
-// Helper function to check if a hostname is a search engine
 function isSearchEngine(hostname) {
   const searchEngines = ["google", "bing", "yahoo", "duckduckgo", "baidu"];
   return searchEngines.some((engine) => hostname.includes(engine));
+}
+
+function playNotificationSound() {
+  chrome.tts.speak("Timer finished", {
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+    onEvent: function (event) {
+      if (event.type === "end") {
+        console.log("Notification sound played");
+      }
+    },
+  });
 }
 
 function shouldBlockUrl(url, blocklist) {
@@ -92,21 +60,148 @@ function shouldBlockUrl(url, blocklist) {
   return false;
 }
 
+function createTimerNotification(title) {
+  playNotificationSound();
+
+  chrome.notifications.create(
+    {
+      type: "basic",
+      iconUrl: chrome.runtime.getURL("icons/icon48.png"),
+      title: "Timer Finished",
+      message: `${title} timer has finished!`,
+      requireInteraction: true,
+    },
+    (notificationId) => {
+      console.log(`Notification created with ID: ${notificationId}`);
+    }
+  );
+}
+
+async function sendMessageToAllTabs(message) {
+  for (const tabId of registeredTabs) {
+    try {
+      await chrome.tabs.sendMessage(tabId, message);
+    } catch (error) {
+      console.error(`Error sending message to tab ${tabId}:`, error);
+      registeredTabs.delete(tabId);
+    }
+  }
+}
+
+function updateTimer() {
+  chrome.storage.local.get(["timerState"]).then((result) => {
+    const timerState = result.timerState;
+    if (timerState && !timerState.isCompleted) {
+      const timeLeft = timerState.endTime - Date.now();
+      if (timeLeft <= 0) {
+        timerState.isCompleted = true;
+        chrome.storage.local.set({ timerState }).then(() => {
+          createTimerNotification(timerState.title);
+        });
+      }
+      sendMessageToAllTabs({
+        action: "updateTimer",
+        timeLeft: Math.max(0, timeLeft),
+        isPaused: timerState.isPaused,
+        isCompleted: timerState.isCompleted,
+      });
+    }
+  });
+}
+
+function startTimerInterval() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(updateTimer, 1000);
+}
+
+// Initialize extension on installation
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "addToBookmarks",
+    title: "Add to Bookmarks",
+    contexts: ["page", "link"],
+  });
+
+  chrome.storage.sync.get(["blocklist"], (result) => {
+    if (!result.blocklist) {
+      chrome.storage.sync.set({ blocklist: [] }, () => {
+        console.log("Initialized empty blocklist");
+      });
+    } else {
+      console.log("Existing blocklist:", result.blocklist);
+    }
+  });
+
+  startTimerInterval();
+});
+
+chrome.tabs.onCreated.addListener((tab) => {
+  updateTimer();
+});
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  registeredTabs.delete(tabId);
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "addToBookmarks") {
+    const url = info.linkUrl || info.pageUrl;
+    const title = tab?.title || url;
+
+    chrome.storage.local.get(["bookmarks"], (result) => {
+      const bookmarks = result.bookmarks || [];
+      const newBookmark = {
+        id: Date.now().toString(),
+        url: url,
+        title: title,
+        folderId: null,
+      };
+      bookmarks.push(newBookmark);
+      chrome.storage.local.set({ bookmarks }, () => {
+        console.log("Bookmark added:", newBookmark);
+        if (tab?.id) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: "bookmarkAdded",
+            bookmark: newBookmark,
+          });
+        }
+      });
+    });
+  }
+});
+
 // Handle messages from content scripts and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "getBookmarks") {
+  if (request.action === "registerTab") {
+    registeredTabs.add(sender.tab.id);
+    sendResponse({ success: true });
+  } else if (request.action === "getBookmarks") {
     chrome.storage.local.get(["bookmarks"], (result) => {
       sendResponse({ bookmarks: result.bookmarks || [] });
     });
     return true;
   } else if (request.action === "createTimerNotification") {
-    chrome.notifications.create({
-      type: "basic",
-      iconUrl: "icons/icon48.png",
-      title: "Timer Finished",
-      message: `${request.title} timer has finished!`,
+    createTimerNotification(request.title);
+    sendResponse({ success: true });
+  } else if (request.action === "setTimerAlarm") {
+    chrome.alarms.create("timerAlarm", { when: request.when });
+    sendResponse({ success: true });
+  } else if (request.action === "clearTimerAlarm") {
+    chrome.alarms.clear("timerAlarm");
+    sendResponse({ success: true });
+  } else if (request.action === "updateTimerPause") {
+    chrome.storage.local.get(["timerState"], (result) => {
+      const timerState = result.timerState;
+      if (timerState) {
+        timerState.isPaused = request.isPaused;
+        chrome.storage.local.set({ timerState });
+        updateTimer();
+      }
     });
-    return true;
+  } else if (request.action === "cancelTimer") {
+    chrome.storage.local.remove(["timerState"]);
+    clearInterval(timerInterval);
   } else if (request.action === "checkSearchResults") {
     chrome.storage.sync.get(["blocklist"], (result) => {
       const blocklist = result.blocklist || [];
@@ -122,6 +217,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ blockedUrls });
     });
     return true;
+  }
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === "timerAlarm") {
+    chrome.storage.local.get(["timerState"], (result) => {
+      if (result.timerState && !result.timerState.isCompleted) {
+        createTimerNotification(result.timerState.title);
+
+        // Update timer state
+        result.timerState.isCompleted = true;
+        chrome.storage.local.set({ timerState: result.timerState }, () => {
+          console.log("Timer state updated: timer completed");
+        });
+
+        // Notify all tabs
+        sendMessageToAllTabs({
+          action: "updateTimer",
+          timeLeft: 0,
+          isPaused: false,
+          isCompleted: true,
+        });
+      }
+    });
   }
 });
 
@@ -173,6 +292,3 @@ function logBlocklist() {
     console.log("Current blocklist:", result.blocklist || []);
   });
 }
-
-// You can call logBlocklist() whenever you want to check the current state of the blocklist
-// For example, you could call it after any operation that modifies the blocklist
