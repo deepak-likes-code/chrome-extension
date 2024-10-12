@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Pause, Play, X } from "react-feather";
 
 interface TimerProps {
@@ -28,6 +28,10 @@ const Timer: React.FC<TimerProps> = ({
   const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+
+  const hourRef = useRef<HTMLDivElement>(null);
+  const minuteRef = useRef<HTMLDivElement>(null);
+  const secondRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (initialTimer) {
@@ -90,17 +94,16 @@ const Timer: React.FC<TimerProps> = ({
     onCancel();
   };
 
-  const handleNumberInput = (
-    value: string,
+  const handleScroll = (
+    event: React.WheelEvent<HTMLDivElement>,
     setter: React.Dispatch<React.SetStateAction<number>>,
     max: number
   ) => {
-    const num = parseInt(value);
-    if (isNaN(num) || num < 0) {
-      setter(0);
-    } else {
-      setter(Math.min(max, num));
-    }
+    event.preventDefault();
+    setter((prevValue) => {
+      const newValue = prevValue - Math.sign(event.deltaY);
+      return newValue < 0 ? max : newValue > max ? 0 : newValue;
+    });
   };
 
   return (
@@ -109,47 +112,41 @@ const Timer: React.FC<TimerProps> = ({
         <>
           <h2 className="text-3xl mb-6">ready to lock-in?</h2>
           <div className="flex justify-center items-center mb-8 space-x-4">
-            <div className="flex flex-row items-center">
-              <input
-                type="number"
-                value={hours}
-                onChange={(e) =>
-                  handleNumberInput(e.target.value, setHours, 99)
-                }
-                className="w-24 p-2 bg-transparent text-center text-5xl"
-                placeholder="00"
-                min="00"
-                max="99"
-              />
-              <span className="text-2xl mt-2">Hr</span>
+            <div className="flex flex-col items-center">
+              <div
+                ref={hourRef}
+                onWheel={(e) => handleScroll(e, setHours, 99)}
+                className="w-24 h-24 overflow-hidden cursor-pointer"
+              >
+                <div className="text-6xl">
+                  {hours.toString().padStart(2, "0")}
+                </div>
+              </div>
+              <span className="text-lg mt-2">Hours</span>
             </div>
-            <div className="flex flex-row items-center">
-              <input
-                type="number"
-                value={minutes}
-                onChange={(e) =>
-                  handleNumberInput(e.target.value, setMinutes, 59)
-                }
-                className="w-24 p-2 bg-transparent text-center text-5xl"
-                placeholder="00"
-                min="00"
-                max="59"
-              />
-              <span className="text-2xl mt-2">Min</span>
+            <div className="flex flex-col items-center">
+              <div
+                ref={minuteRef}
+                onWheel={(e) => handleScroll(e, setMinutes, 59)}
+                className="w-24 h-24 overflow-hidden cursor-pointer"
+              >
+                <div className="text-6xl">
+                  {minutes.toString().padStart(2, "0")}
+                </div>
+              </div>
+              <span className="text-lg mt-2">Minutes</span>
             </div>
-            <div className="flex flex-row items-center">
-              <input
-                type="number"
-                value={seconds}
-                onChange={(e) =>
-                  handleNumberInput(e.target.value, setSeconds, 59)
-                }
-                className="w-24 p-2 bg-transparent text-center text-5xl"
-                placeholder="00"
-                min="00"
-                max="59"
-              />
-              <span className="text-2xl mt-2">Sec</span>
+            <div className="flex flex-col items-center">
+              <div
+                ref={secondRef}
+                onWheel={(e) => handleScroll(e, setSeconds, 59)}
+                className="w-24 h-24 overflow-hidden cursor-pointer"
+              >
+                <div className="text-6xl">
+                  {seconds.toString().padStart(2, "0")}
+                </div>
+              </div>
+              <span className="text-lg mt-2">Seconds</span>
             </div>
           </div>
           <div className="flex flex-row justify-center items-center gap-x-4">
