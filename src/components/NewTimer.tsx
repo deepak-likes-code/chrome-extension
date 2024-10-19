@@ -106,48 +106,49 @@ const Timer: React.FC<TimerProps> = ({
     });
   };
 
+  const handleManualInput = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    max: number
+  ) => {
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= max) {
+      setter(numValue);
+    }
+  };
+
   return (
     <div className="fixed top-1/3 left-1/3 transform -translate-x-1/2 bg-opacity-50 text-white rounded-lg p-6 text-center">
       {!isRunning ? (
         <>
           <h2 className="text-3xl mb-6">ready to lock-in?</h2>
           <div className="flex justify-center items-center mb-8 space-x-4">
-            <div className="flex flex-col items-center">
-              <div
-                ref={hourRef}
-                onWheel={(e) => handleScroll(e, setHours, 99)}
-                className="w-24 h-24 overflow-hidden cursor-pointer"
-              >
-                <div className="text-6xl">
-                  {hours.toString().padStart(2, "0")}
+            {[
+              { value: hours, setter: setHours, max: 99, label: "Hours" },
+              { value: minutes, setter: setMinutes, max: 59, label: "Minutes" },
+              { value: seconds, setter: setSeconds, max: 59, label: "Seconds" },
+            ].map((item, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <div className="relative w-24 h-24 overflow-hidden">
+                  <div
+                    onWheel={(e) => handleScroll(e, item.setter, item.max)}
+                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                  >
+                    <input
+                      type="text"
+                      value={item.value.toString().padStart(2, "0")}
+                      onChange={(e) =>
+                        handleManualInput(e.target.value, item.setter, item.max)
+                      }
+                      className="w-full h-full text-6xl text-center bg-transparent focus:outline-none"
+                    />
+                  </div>
+                  <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent opacity-50"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent opacity-50"></div>
                 </div>
+                <span className="text-lg mt-2">{item.label}</span>
               </div>
-              <span className="text-lg mt-2">Hours</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div
-                ref={minuteRef}
-                onWheel={(e) => handleScroll(e, setMinutes, 59)}
-                className="w-24 h-24 overflow-hidden cursor-pointer"
-              >
-                <div className="text-6xl">
-                  {minutes.toString().padStart(2, "0")}
-                </div>
-              </div>
-              <span className="text-lg mt-2">Minutes</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div
-                ref={secondRef}
-                onWheel={(e) => handleScroll(e, setSeconds, 59)}
-                className="w-24 h-24 overflow-hidden cursor-pointer"
-              >
-                <div className="text-6xl">
-                  {seconds.toString().padStart(2, "0")}
-                </div>
-              </div>
-              <span className="text-lg mt-2">Seconds</span>
-            </div>
+            ))}
           </div>
           <div className="flex flex-row justify-center items-center gap-x-4">
             <input

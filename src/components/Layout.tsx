@@ -15,8 +15,9 @@ interface TimerState {
 }
 
 const MacOSLayout: React.FC = () => {
-  const [backgroundImage, setBackgroundImage] =
-    useState<string>("../assets/bg.jpg");
+  const [backgroundImage, setBackgroundImage] = useState(
+    "/backgrounds/arriety.jpg"
+  );
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [timer, setTimer] = useState<TimerState | null>(null);

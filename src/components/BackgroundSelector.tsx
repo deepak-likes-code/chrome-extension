@@ -1,4 +1,8 @@
-import React, { useCallback } from "react";
+interface BackgroundSelectorProps {
+  onBackgroundChange: (newBackground: string) => void;
+}
+
+import React, { useCallback, useState } from "react";
 
 interface BackgroundSelectorProps {
   onBackgroundChange: (newBackground: string) => void;
@@ -7,6 +11,27 @@ interface BackgroundSelectorProps {
 const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
   onBackgroundChange,
 }) => {
+  const pastelColors = [
+    "#FFB3BA",
+    "#BAFFC9",
+    "#BAE1FF",
+    "#FFFFBA",
+    "#FFDFBA",
+    "#E0BBE4",
+    "#D4F0F0",
+    "#FFC6FF",
+    "#DAEAF6",
+    "#FFDAB9",
+  ];
+
+  const [currentColorIndex, setCurrentColorIndex] = useState(0);
+
+  const handleShuffle = useCallback(() => {
+    const newIndex = (currentColorIndex + 1) % pastelColors.length;
+    setCurrentColorIndex(newIndex);
+    onBackgroundChange(pastelColors[newIndex]);
+  }, [currentColorIndex, onBackgroundChange]);
+
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -23,17 +48,13 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
     [onBackgroundChange]
   );
 
-  const handleDefaultBackground = useCallback(() => {
-    onBackgroundChange("../assets/images/bg.jpg");
-  }, [onBackgroundChange]);
-
   return (
     <div className="fixed bottom-4 right-4 flex items-center gap-2">
       <button
-        onClick={handleDefaultBackground}
+        onClick={handleShuffle}
         className="px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"
       >
-        <span className="text-white text-sm">Default BG</span>
+        <span className="text-white text-sm">Shuffle BG</span>
       </button>
 
       <label
