@@ -5,23 +5,21 @@ import FolderGrid from "./FolderGrid";
 import BookmarkGrid from "./BookmarkGrid";
 import TodoList from "./TodoList";
 import BackgroundSelector from "./BackgroundSelector";
-import TimerModal from "./TimerModal";
-import Timer from "./Timer";
 import BlocklistManager from "./BlockList";
+import Timer from "./NewTimer";
 
 interface TimerState {
   title: string;
   endTime: number;
   isPaused: boolean;
-  isCompleted: boolean;
 }
 
 const MacOSLayout: React.FC = () => {
-  const [backgroundImage, setBackgroundImage] =
-    useState<string>("../assets/bg.jpg");
+  const [backgroundImage, setBackgroundImage] = useState(
+    "/backgrounds/arriety.jpg"
+  );
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [isTimerModalOpen, setIsTimerModalOpen] = useState(false);
   const [timer, setTimer] = useState<TimerState | null>(null);
   const [showBlocklist, setShowBlocklist] = useState(false);
 
@@ -69,37 +67,21 @@ const MacOSLayout: React.FC = () => {
     minutes: number,
     seconds: number
   ) => {
-    const endTime =
-      Date.now() +
-      hours * 60 * 60 * 1000 +
-      minutes * 60 * 1000 +
-      seconds * 1000;
+    const endTime = Date.now() + (hours * 3600 + minutes * 60 + seconds) * 1000;
     const newTimerState: TimerState = {
       title,
       endTime,
       isPaused: false,
-      isCompleted: false,
     };
     setTimer(newTimerState);
     chrome.storage.local.set({ timerState: newTimerState }, () => {
       console.log("Timer state saved");
     });
-    chrome.runtime.sendMessage({
-      action: "setTimerAlarm",
-      alarmName: "timerAlarm",
-      when: endTime,
-    });
-
-    setIsTimerModalOpen(false);
   };
 
   const handleTimerEnd = () => {
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
-    });
-    chrome.runtime.sendMessage({
-      action: "clearTimerAlarm",
-      alarmName: "timerAlarm",
     });
     setTimer(null);
   };
@@ -108,11 +90,17 @@ const MacOSLayout: React.FC = () => {
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
     });
-    chrome.runtime.sendMessage({
-      action: "clearTimerAlarm",
-      alarmName: "timerAlarm",
-    });
     setTimer(null);
+  };
+
+  const handleTimerPause = (isPaused: boolean) => {
+    if (timer) {
+      const updatedTimer = { ...timer, isPaused };
+      setTimer(updatedTimer);
+      chrome.storage.local.set({ timerState: updatedTimer }, () => {
+        console.log("Timer pause state updated");
+      });
+    }
   };
 
   return (
@@ -150,12 +138,6 @@ const MacOSLayout: React.FC = () => {
 
           <div className="flex items-center justify-center mt-4">
             <button
-              onClick={() => setIsTimerModalOpen(true)}
-              className="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 transition-colors"
-            >
-              Add Timer
-            </button>
-            <button
               onClick={() => setShowBlocklist(!showBlocklist)}
               className="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 transition-colors"
             >
@@ -166,24 +148,17 @@ const MacOSLayout: React.FC = () => {
           {showBlocklist && <BlocklistManager />}
         </div>
 
-        {timer && (
-          <Timer
-            title={timer.title}
-            endTime={timer.endTime}
-            onTimerEnd={handleTimerEnd}
-            onCancel={handleCancelTimer}
-          />
-        )}
+        <Timer
+          initialTimer={timer}
+          onSetTimer={handleSetTimer}
+          onTimerEnd={handleTimerEnd}
+          onCancel={handleCancelTimer}
+          onPause={handleTimerPause}
+        />
 
         <div className="fixed bottom-4 right-4 flex items-center space-x-8 z-10">
           <BackgroundSelector onBackgroundChange={handleBackgroundChange} />
         </div>
-
-        <TimerModal
-          isOpen={isTimerModalOpen}
-          onClose={() => setIsTimerModalOpen(false)}
-          onSetTimer={handleSetTimer}
-        />
       </div>
     </DndProvider>
   );
