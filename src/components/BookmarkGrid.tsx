@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { BookmarkIcon } from "./BookmarkIcon";
+import AddBookmarkModal from "./AddBookmarkModal";
 
 interface Bookmark {
   id: string;
@@ -39,6 +40,7 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   onBackToFolders,
 }) => {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   useEffect(() => {
     chrome.storage.local.get(["bookmarks"], (result) => {
@@ -76,16 +78,17 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
     chrome.storage.local.set({ bookmarks: updatedBookmarks });
   };
 
-  const addBookmark = () => {
+  const addBookmark = (url: string, title: string) => {
     const newBookmark: Bookmark = {
       id: Date.now().toString(),
-      url: "https://example.com",
-      title: "New Bookmark",
+      url,
+      title,
       folderId: selectedFolder,
     };
     const updatedBookmarks = [...bookmarks, newBookmark];
     setBookmarks(updatedBookmarks);
     chrome.storage.local.set({ bookmarks: updatedBookmarks });
+    setIsAddModalOpen(false);
   };
 
   const renameBookmark = (id: string, newName: string) => {
@@ -124,8 +127,13 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
             onDelete={deleteBookmark}
           />
         ))}
-        <AddBookmarkIcon onAddBookmark={addBookmark} />
+        <AddBookmarkIcon onAddBookmark={() => setIsAddModalOpen(true)} />
       </div>
+      <AddBookmarkModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={addBookmark}
+      />
     </div>
   );
 };
