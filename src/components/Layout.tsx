@@ -6,7 +6,7 @@ import BookmarkGrid from "./BookmarkGrid";
 import TodoList from "./TodoList";
 import BackgroundSelector from "./BackgroundSelector";
 import BlocklistManager from "./BlockList";
-import Timer from "./NewTimer";
+import Timer from "./Timer";
 
 interface TimerState {
   title: string;

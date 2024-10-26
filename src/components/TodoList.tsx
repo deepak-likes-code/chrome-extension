@@ -45,7 +45,7 @@ const TodoList: React.FC = () => {
   };
 
   return (
-    <div className="bg-white bg-opacity-60 p-6 rounded-lg shadow-lg flex flex-col min-h-64">
+    <div className="bg-white bg-opacity-20 p-6 backdrop-blur-sm rounded-lg shadow-lg flex flex-col min-h-64">
       <div className="mb-6 flex">
         <input
           type="text"
@@ -61,11 +61,11 @@ const TodoList: React.FC = () => {
           +
         </button>
       </div>
-      <ul className="overflow-auto flex-grow text-md space-y-4">
+      <ul className="overflow-auto pr-2 flex-grow text-md space-y-4">
         {todos.map((todo) => (
           <li
             key={todo.id}
-            className="flex items-center bg-gray-100 p-4 rounded-lg"
+            className="flex items-center bg-gray-100 p-4 rounded-lg mr-2"
           >
             <input
               type="checkbox"

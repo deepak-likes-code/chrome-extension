@@ -1,139 +1,196 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Pause, Play, X } from "react-feather";
 
 interface TimerProps {
-  title: string;
-  endTime: number;
+  initialTimer: { title: string; endTime: number; isPaused: boolean } | null;
+  onSetTimer: (
+    title: string,
+    hours: number,
+    minutes: number,
+    seconds: number
+  ) => void;
   onTimerEnd: () => void;
   onCancel: () => void;
+  onPause: (isPaused: boolean) => void;
 }
 
 const Timer: React.FC<TimerProps> = ({
-  title,
-  endTime,
+  initialTimer,
+  onSetTimer,
   onTimerEnd,
   onCancel,
+  onPause,
 }) => {
-  const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
+  const [title, setTitle] = useState("");
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
 
-  const updateTimerState = useCallback(() => {
-    chrome.storage.local.set({
-      timerState: { title, endTime, isPaused, isCompleted },
-    });
-  }, [title, endTime, isPaused, isCompleted]);
+  const hourRef = useRef<HTMLDivElement>(null);
+  const minuteRef = useRef<HTMLDivElement>(null);
+  const secondRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialTimer) {
+      setTitle(initialTimer.title);
+      setIsRunning(true);
+      setIsPaused(initialTimer.isPaused);
+      setTimeLeft(
+        Math.max(0, Math.floor((initialTimer.endTime - Date.now()) / 1000))
+      );
+    }
+  }, [initialTimer]);
+
+  const formatTime = (time: number) => {
+    const hrs = Math.floor(time / 3600);
+    const mins = Math.floor((time % 3600) / 60);
+    const secs = time % 60;
+    return `${hrs.toString().padStart(2, "0")} hr ${mins
+      .toString()
+      .padStart(2, "0")}min ${secs.toString().padStart(2, "0")}sec`;
+  };
+
+  const startTimer = useCallback(() => {
+    if (hours === 0 && minutes === 0 && seconds === 0) return;
+    const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    onSetTimer(title, hours, minutes, seconds);
+    setTimeLeft(totalSeconds);
+    setIsRunning(true);
+  }, [hours, minutes, seconds, title, onSetTimer]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-    if (!isPaused && !isCompleted) {
+    if (isRunning && !isPaused && timeLeft > 0) {
       interval = setInterval(() => {
-        const newTimeLeft = endTime - Date.now();
-        if (newTimeLeft <= 0) {
-          clearInterval(interval);
-          setTimeLeft(0);
-          setIsCompleted(true);
-          chrome.runtime.sendMessage({
-            action: "createTimerNotification",
-            title: title,
-          });
-          onTimerEnd();
-        } else {
-          setTimeLeft(newTimeLeft);
-        }
+        setTimeLeft((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(interval);
+            setIsRunning(false);
+            onTimerEnd();
+            return 0;
+          }
+          return prevTime - 1;
+        });
       }, 1000);
     }
 
     return () => clearInterval(interval);
-  }, [endTime, onTimerEnd, isPaused, isCompleted, title]);
-
-  useEffect(() => {
-    updateTimerState();
-  }, [updateTimerState]);
-
-  useEffect(() => {
-    const messageListener = (
-      message: any,
-      sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: any) => void
-    ) => {
-      if (message.action === "updateTimer") {
-        setTimeLeft(message.timeLeft);
-        setIsPaused(message.isPaused);
-        setIsCompleted(message.isCompleted);
-      }
-    };
-
-    chrome.runtime.onMessage.addListener(messageListener);
-
-    // Initialize timer state
-    const initializeTimerState = () => {
-      chrome.storage.local.get(["timerState"], (result) => {
-        if (result.timerState) {
-          setTimeLeft(result.timerState.endTime - Date.now());
-          setIsPaused(result.timerState.isPaused);
-          setIsCompleted(result.timerState.isCompleted);
-        }
-      });
-    };
-
-    initializeTimerState();
-
-    // Notify background script that the timer component is ready
-    chrome.runtime.sendMessage({ action: "timerComponentReady" });
-
-    return () => {
-      chrome.runtime.onMessage.removeListener(messageListener);
-    };
-  }, []);
-
-  const formatTime = (ms: number) => {
-    const totalSeconds = Math.ceil(ms / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
-  };
+  }, [isRunning, isPaused, timeLeft, onTimerEnd]);
 
   const togglePause = () => {
     const newPausedState = !isPaused;
     setIsPaused(newPausedState);
-    chrome.runtime.sendMessage({
-      action: "updateTimerPause",
-      isPaused: newPausedState,
+    onPause(newPausedState);
+  };
+
+  const handleCancel = () => {
+    setIsRunning(false);
+    setIsPaused(false);
+    setTimeLeft(0);
+    onCancel();
+  };
+
+  const handleScroll = (
+    event: React.WheelEvent<HTMLDivElement>,
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    max: number
+  ) => {
+    event.preventDefault();
+    setter((prevValue) => {
+      const newValue = prevValue - Math.sign(event.deltaY);
+      return newValue < 0 ? max : newValue > max ? 0 : newValue;
     });
   };
 
-  const handleClose = () => {
-    onCancel();
-    chrome.runtime.sendMessage({ action: "cancelTimer" });
+  const handleManualInput = (
+    value: string,
+    setter: React.Dispatch<React.SetStateAction<number>>,
+    max: number
+  ) => {
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= max) {
+      setter(numValue);
+    }
+  };
+
+  const getTimeValues = () => {
+    if (isRunning) {
+      const hrs = Math.floor(timeLeft / 3600);
+      const mins = Math.floor((timeLeft % 3600) / 60);
+      const secs = timeLeft % 60;
+      return [
+        { value: hrs, setter: setHours, max: 99, label: "Hours" },
+        { value: mins, setter: setMinutes, max: 59, label: "Minutes" },
+        { value: secs, setter: setSeconds, max: 59, label: "Seconds" },
+      ];
+    }
+    return [
+      { value: hours, setter: setHours, max: 99, label: "Hours" },
+      { value: minutes, setter: setMinutes, max: 59, label: "Minutes" },
+      { value: seconds, setter: setSeconds, max: 59, label: "Seconds" },
+    ];
   };
 
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-80 rounded-lg shadow-lg p-6 text-center hover:bg-opacity-100 transition-all duration-300">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
-      {isCompleted ? (
-        <>
-          <div className="text-4xl font-bold text-green-600 mb-4">
-            Mission Accomplished!
+    <div className="fixed top-1/3 left-1/3 transform -translate-x-1/2 bg-opacity-50 text-white rounded-lg p-6 text-center">
+      <h2 className="text-3xl mb-6">
+        {isRunning ? (title ? title : "Locked In") : "ready to lock-in?"}
+      </h2>
+      <div className="flex justify-center items-center mb-8 space-x-4">
+        {getTimeValues().map((item, index) => (
+          <div key={index} className="flex flex-col items-center">
+            <div className="relative w-24 h-24 overflow-hidden">
+              <div
+                onWheel={(e) =>
+                  !isRunning && handleScroll(e, item.setter, item.max)
+                }
+                className="absolute inset-0 flex items-center justify-center cursor-pointer"
+              >
+                <input
+                  type="text"
+                  value={item.value.toString().padStart(2, "0")}
+                  onChange={(e) =>
+                    !isRunning &&
+                    handleManualInput(e.target.value, item.setter, item.max)
+                  }
+                  className="w-full h-full text-6xl text-center bg-transparent focus:outline-none"
+                  readOnly={isRunning}
+                />
+              </div>
+              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-black to-transparent opacity-50"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black to-transparent opacity-50"></div>
+            </div>
+            <span className="text-lg mt-2">{item.label}</span>
           </div>
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Close
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="text-6xl font-mono mb-4">{formatTime(timeLeft)}</div>
+        ))}
+      </div>
+      <div className="flex flex-row justify-center items-center gap-x-4">
+        {!isRunning && (
+          <>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="current task"
+              className="w-full p-2 bg-transparent border rounded-md text-left text-xl"
+            />
+            <button
+              onClick={startTimer}
+              className="px-3 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-xl"
+            >
+              Let's go.
+            </button>
+          </>
+        )}
+        {isRunning && (
           <div className="flex justify-center space-x-4">
             <button
               onClick={togglePause}
-              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              className="p-2 bg-gray-600 rounded-full hover:bg-gray-700 transition-colors"
             >
               {isPaused ? (
                 <Play className="h-6 w-6" />
@@ -142,14 +199,14 @@ const Timer: React.FC<TimerProps> = ({
               )}
             </button>
             <button
-              onClick={handleClose}
-              className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              onClick={handleCancel}
+              className="p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
           </div>
-        </>
-      )}
+        )}
+      </div>
     </div>
   );
 };
