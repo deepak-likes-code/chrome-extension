@@ -79,7 +79,7 @@ export const BookmarkIcon: React.FC<{
           autoFocus
         />
       ) : (
-        <span className="text-xs text-white font-medium mt-1 text-center overflow-hidden">
+        <span className="text-xs text-white font-medium mt-1 text-center overflow-hidden whitespace-nowrap text-ellipsis w-full px-1">
           {bookmark.title}
         </span>
       )}

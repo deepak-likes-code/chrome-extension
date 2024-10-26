@@ -14,26 +14,39 @@ interface TimerState {
   isPaused: boolean;
 }
 
+interface BackgroundState {
+  type: "image" | "color";
+  value: string;
+}
+
 const MacOSLayout: React.FC = () => {
-  const [backgroundImage, setBackgroundImage] = useState(
-    "/backgrounds/arriety.jpg"
-  );
+  const [background, setBackground] = useState<BackgroundState>({
+    type: "image",
+    value: "/backgrounds/arriety.jpg",
+  });
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [timer, setTimer] = useState<TimerState | null>(null);
   const [showBlocklist, setShowBlocklist] = useState(false);
 
-  const handleBackgroundChange = useCallback((newBackgroundImage: string) => {
-    setBackgroundImage(newBackgroundImage);
-    chrome.storage.local.set({ backgroundImage: newBackgroundImage }, () => {
-      console.log("Background image saved");
-    });
-  }, []);
+  const handleBackgroundChange = useCallback(
+    (newBackground: string, isColor: boolean = false) => {
+      const backgroundState: BackgroundState = {
+        type: isColor ? "color" : "image",
+        value: newBackground,
+      };
+      setBackground(backgroundState);
+      chrome.storage.local.set({ background: backgroundState }, () => {
+        console.log("Background saved");
+      });
+    },
+    []
+  );
 
   useEffect(() => {
-    chrome.storage.local.get(["backgroundImage", "timerState"], (result) => {
-      if (result.backgroundImage) {
-        setBackgroundImage(result.backgroundImage);
+    chrome.storage.local.get(["background", "timerState"], (result) => {
+      if (result.background) {
+        setBackground(result.background);
       }
       if (result.timerState) {
         setTimer(result.timerState);
@@ -86,6 +99,34 @@ const MacOSLayout: React.FC = () => {
     setTimer(null);
   };
 
+  const handlePresetTimer = (
+    title: string,
+    hours: number,
+    minutes: number,
+    seconds: number
+  ) => {
+    // Just pre-fill the timer component without starting it
+    if (timer?.title === title) {
+      // If clicking the same todo, clear the timer
+      handleCancelTimer();
+    } else {
+      const presetTimer = {
+        title,
+        // Set a future time but don't start the timer
+        endTime: Date.now() + (hours * 3600 + minutes * 60 + seconds) * 1000,
+        isPaused: true, // Keep it paused initially
+      };
+      setTimer(presetTimer);
+    }
+  };
+
+  const getActiveTimerTitle = () => {
+    if (timer && !timer.isPaused) {
+      return timer.title;
+    }
+    return null;
+  };
+
   const handleCancelTimer = () => {
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
@@ -107,11 +148,17 @@ const MacOSLayout: React.FC = () => {
     <DndProvider backend={HTML5Backend}>
       <div
         className="h-screen w-screen overflow-hidden flex justify-stretch relative"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
+        style={
+          background.type === "image"
+            ? {
+                backgroundImage: `url(${background.value})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : {
+                backgroundColor: background.value,
+              }
+        }
       >
         <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
 
@@ -119,7 +166,10 @@ const MacOSLayout: React.FC = () => {
 
         <div className="flex w-1/2 flex-col px-2 mt-4 relative z-10">
           <div className="flex flex-col max-h-[50vh]">
-            <TodoList />
+            <TodoList
+              onPresetTimer={handlePresetTimer}
+              activeTimerTitle={getActiveTimerTitle()}
+            />
           </div>
           <div className="flex">
             {selectedFolder === null ? (
@@ -139,7 +189,7 @@ const MacOSLayout: React.FC = () => {
           <div className="flex items-center justify-center mt-4">
             <button
               onClick={() => setShowBlocklist(!showBlocklist)}
-              className="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 transition-colors"
+              className="px-3 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-md"
             >
               {showBlocklist ? "Hide Blocklist" : "Show Blocklist"}
             </button>

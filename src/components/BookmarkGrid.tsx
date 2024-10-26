@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { BookmarkIcon } from "./BookmarkIcon";
 import AddBookmarkModal from "./AddBookmarkModal";
+import { ArrowLeft } from "lucide-react";
 
 interface Bookmark {
   id: string;
@@ -114,8 +115,9 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
       <button
         onClick={onBackToFolders}
         className="mb-4 bg-blue-500 text-white p-2 rounded"
+        aria-label="Back to Folders"
       >
-        Back to Folders
+        <ArrowLeft size={24} />
       </button>
       <div className="grid grid-cols-4 gap-4">
         {filteredBookmarks.map((bookmark) => (

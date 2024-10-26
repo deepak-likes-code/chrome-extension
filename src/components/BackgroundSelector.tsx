@@ -1,11 +1,8 @@
-interface BackgroundSelectorProps {
-  onBackgroundChange: (newBackground: string) => void;
-}
-
 import React, { useCallback, useState } from "react";
+import { Shuffle } from "lucide-react";
 
 interface BackgroundSelectorProps {
-  onBackgroundChange: (newBackground: string) => void;
+  onBackgroundChange: (newBackground: string, isColor?: boolean) => void;
 }
 
 const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
@@ -29,8 +26,8 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
   const handleShuffle = useCallback(() => {
     const newIndex = (currentColorIndex + 1) % pastelColors.length;
     setCurrentColorIndex(newIndex);
-    onBackgroundChange(pastelColors[newIndex]);
-  }, [currentColorIndex, onBackgroundChange]);
+    onBackgroundChange(pastelColors[newIndex], true); // Pass true to indicate this is a color
+  }, [currentColorIndex, onBackgroundChange, pastelColors]);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,7 +36,7 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
         const reader = new FileReader();
         reader.onload = (event) => {
           if (event.target && typeof event.target.result === "string") {
-            onBackgroundChange(event.target.result);
+            onBackgroundChange(event.target.result, false); // Pass false to indicate this is an image
           }
         };
         reader.readAsDataURL(file);
@@ -52,14 +49,16 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
     <div className="fixed bottom-4 right-4 flex items-center gap-2">
       <button
         onClick={handleShuffle}
-        className="px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"
+        className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"
+        title="Shuffle background color"
       >
-        <span className="text-white text-sm">Shuffle BG</span>
+        <Shuffle className="h-5 w-5 text-white" />
       </button>
 
       <label
         htmlFor="bg-upload"
         className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"
+        title="Upload background image"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -75,7 +74,6 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
-        <span className="text-white text-sm">Change Background</span>
       </label>
       <input
         id="bg-upload"

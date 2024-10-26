@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Trash2 } from "lucide-react";
 
 const BlocklistManager: React.FC = () => {
   const [blockedItems, setBlockedItems] = useState<string[]>([]);
@@ -33,8 +34,7 @@ const BlocklistManager: React.FC = () => {
   };
 
   return (
-    <div className="bg-white bg-opacity-80 rounded-lg shadow-lg p-6 m-4">
-      <h2 className="text-2xl font-bold mb-4">Manage Blocklist</h2>
+    <div className="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg p-6 m-4">
       <div className="flex mb-4">
         <input
           type="text"
@@ -45,7 +45,7 @@ const BlocklistManager: React.FC = () => {
         />
         <button
           onClick={addItem}
-          className="bg-blue-500 text-white p-2 rounded-r hover:bg-blue-600 transition-colors"
+          className=" text-white p-2 rounded-r bg-gray-600 hover:bg-gray-800 transition-colors"
         >
           Add
         </button>
@@ -57,11 +57,8 @@ const BlocklistManager: React.FC = () => {
             className="flex justify-between items-center mb-2 p-2 bg-gray-100 rounded"
           >
             <span>{item}</span>
-            <button
-              onClick={() => removeItem(item)}
-              className="text-red-500 hover:text-red-700 transition-colors"
-            >
-              🗑️
+            <button onClick={() => removeItem(item)}>
+              <Trash2 />
             </button>
           </li>
         ))}
