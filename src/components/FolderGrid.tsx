@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
 import { useDrag, useDrop } from "react-dnd";
 import { FolderIcon } from "./FolderIcon";
-import { BookmarkIcon } from "./BookmarkIcon";
+import BookmarkIcon from "./BookmarkIcon";
 import { Bookmark } from "../types/Bookmark";
 import { Folder, FolderGridProps } from "../types/Folder";
+import { FolderPlus, Plus } from "lucide-react";
 
 const AddFolderIcon: React.FC<{ onAddFolder: () => void }> = ({
   onAddFolder,
 }) => {
   return (
     <div
-      className="w-24 h-24 m-2 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-800 rounded"
+      className="w-24 h-24 m-2 flex flex-col items-center justify-center cursor-pointer group"
       onClick={onAddFolder}
     >
-      <div className="w-16 h-16 bg-gray-700 flex items-center justify-center rounded">
-        <span className="text-4xl">+</span>
+      <div className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center rounded-lg shadow-lg group-hover:bg-opacity-30 transition-all duration-300">
+        <FolderPlus className="h-8 w-8 text-white" />
       </div>
-      <span className="text-xs mt-1 text-white text-center overflow-hidden">
+      <span className="text-sm text-white font-medium mt-2 text-center overflow-hidden">
         Add Folder
       </span>
     </div>
@@ -26,6 +27,8 @@ const AddFolderIcon: React.FC<{ onAddFolder: () => void }> = ({
 const FolderGrid: React.FC<FolderGridProps> = ({ onSelectFolder }) => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
 
   useEffect(() => {
     chrome.storage.local.get(["folders", "bookmarks"], (result) => {
@@ -51,10 +54,13 @@ const FolderGrid: React.FC<FolderGridProps> = ({ onSelectFolder }) => {
   }, []);
 
   const addFolder = () => {
-    const newFolder: Folder = { id: Date.now().toString(), name: "New Folder" };
+    const name = newFolderName.trim() || "New Folder";
+    const newFolder: Folder = { id: Date.now().toString(), name };
     const updatedFolders = [...folders, newFolder];
     setFolders(updatedFolders);
     chrome.storage.local.set({ folders: updatedFolders });
+    setNewFolderName("");
+    setIsAddingFolder(false);
   };
 
   const renameFolder = (id: string, newName: string) => {
@@ -70,7 +76,6 @@ const FolderGrid: React.FC<FolderGridProps> = ({ onSelectFolder }) => {
     setFolders(updatedFolders);
     chrome.storage.local.set({ folders: updatedFolders });
 
-    // Delete bookmarks in this folder
     const updatedBookmarks = bookmarks.filter((b) => b.folderId !== id);
     setBookmarks(updatedBookmarks);
     chrome.storage.local.set({ bookmarks: updatedBookmarks });
@@ -93,8 +98,45 @@ const FolderGrid: React.FC<FolderGridProps> = ({ onSelectFolder }) => {
   const unorganizedBookmarks = bookmarks.filter((b) => b.folderId === null);
 
   return (
-    <div className="flex p-4 overflow-auto">
-      <div className="grid grid-cols-4 gap-1">
+    <div className="flex-1 p-6 overflow-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold text-white">My Folders</h2>
+        <button
+          onClick={() => setIsAddingFolder(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300 text-white"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-sm font-medium">New Folder</span>
+        </button>
+      </div>
+
+      {isAddingFolder && (
+        <div className="mb-6 flex gap-2">
+          <input
+            type="text"
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            placeholder="Enter folder name"
+            className="flex-grow p-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-white"
+            autoFocus
+            onKeyPress={(e) => e.key === "Enter" && addFolder()}
+          />
+          <button
+            onClick={addFolder}
+            className="px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg text-white hover:bg-opacity-30 transition-all duration-300"
+          >
+            Add
+          </button>
+          <button
+            onClick={() => setIsAddingFolder(false)}
+            className="px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg text-white hover:bg-opacity-30 transition-all duration-300"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {folders.map((folder) => (
           <FolderIcon
             key={folder.id}
@@ -122,7 +164,7 @@ const FolderGrid: React.FC<FolderGridProps> = ({ onSelectFolder }) => {
             onDelete={deleteBookmark}
           />
         ))}
-        <AddFolderIcon onAddFolder={addFolder} />
+        <AddFolderIcon onAddFolder={() => setIsAddingFolder(true)} />
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Clock, Trash2 } from "lucide-react";
 
 interface Todo {
   id: string;
@@ -6,7 +7,20 @@ interface Todo {
   completed: boolean;
 }
 
-const TodoList: React.FC = () => {
+interface TodoListProps {
+  onPresetTimer?: (
+    title: string,
+    hours: number,
+    minutes: number,
+    seconds: number
+  ) => void;
+  activeTimerTitle?: string | null;
+}
+
+const TodoList: React.FC<TodoListProps> = ({
+  onPresetTimer,
+  activeTimerTitle,
+}) => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState("");
 
@@ -44,6 +58,13 @@ const TodoList: React.FC = () => {
     setTodos(todos.filter((todo) => todo.id !== id));
   };
 
+  const handlePresetTimer = (todo: Todo) => {
+    if (onPresetTimer) {
+      // Preset to 25 minutes
+      onPresetTimer(todo.text, 0, 25, 0);
+    }
+  };
+
   return (
     <div className="bg-white bg-opacity-20 p-6 backdrop-blur-sm rounded-lg shadow-lg flex flex-col min-h-64">
       <div className="mb-6 flex">
@@ -51,12 +72,13 @@ const TodoList: React.FC = () => {
           type="text"
           value={newTodo}
           onChange={(e) => setNewTodo(e.target.value)}
+          onKeyPress={(e) => e.key === "Enter" && addTodo()}
           placeholder="Add a new todo"
           className="flex-grow p-3 text-md border-2 border-gray-300 rounded-l-lg focus:outline-none focus:border-gray-500"
         />
         <button
           onClick={addTodo}
-          className="bg-gray-600 hover:bg-blue-600 text-white text-xl font-bold p-3 rounded-r-lg transition duration-200"
+          className="bg-gray-600 hover:bg-gray-800 text-white text-xl font-bold p-3 rounded-r-lg transition duration-200"
         >
           +
         </button>
@@ -65,7 +87,11 @@ const TodoList: React.FC = () => {
         {todos.map((todo) => (
           <li
             key={todo.id}
-            className="flex items-center bg-gray-100 p-4 rounded-lg mr-2"
+            className={`flex items-center p-4 rounded-lg mr-2 transition-all duration-200 ${
+              activeTimerTitle === todo.text
+                ? "bg-blue-100 border-2 border-blue-300"
+                : "bg-gray-100"
+            }`}
           >
             <input
               type="checkbox"
@@ -80,12 +106,26 @@ const TodoList: React.FC = () => {
             >
               {todo.text}
             </span>
-            <button
-              onClick={() => deleteTodo(todo.id)}
-              className="ml-4 text-red-500 hover:text-red-700 text-xl transition duration-200"
-            >
-              🗑️
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handlePresetTimer(todo)}
+                className={`p-2 rounded-full transition duration-200 ${
+                  activeTimerTitle === todo.text
+                    ? "bg-blue-500 text-white"
+                    : "text-gray-500 hover:text-blue-500"
+                }`}
+                title="Set Timer (25min)"
+              >
+                <Clock className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => deleteTodo(todo.id)}
+                className="p-2 rounded-full text-gray-500 hover:text-red-500 transition duration-200"
+                title="Delete Todo"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
           </li>
         ))}
       </ul>

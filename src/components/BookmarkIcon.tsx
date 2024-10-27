@@ -1,13 +1,21 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useDrag } from "react-dnd";
-import { Bookmark } from "../types/Bookmark";
+import { Bookmark, Edit, Trash2 } from "lucide-react";
+import { Bookmark as BookmarkType } from "../types/Bookmark";
 
-export const BookmarkIcon: React.FC<{
-  bookmark: Bookmark;
+interface BookmarkIconProps {
+  bookmark: BookmarkType;
   onMove: (id: string, folderId: string | null) => void;
   onRename: (id: string, newName: string) => void;
   onDelete: (id: string) => void;
-}> = ({ bookmark, onMove, onRename, onDelete }) => {
+}
+
+const BookmarkIcon: React.FC<BookmarkIconProps> = ({
+  bookmark,
+  onMove,
+  onRename,
+  onDelete,
+}) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "bookmark",
     item: { id: bookmark.id },
@@ -38,36 +46,29 @@ export const BookmarkIcon: React.FC<{
   };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showContextMenu) {
-        setShowContextMenu(false);
-      }
-    };
-
+    const handleClickOutside = () =>
+      showContextMenu && setShowContextMenu(false);
     document.addEventListener("click", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-    };
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [showContextMenu]);
 
   return (
     <div
       ref={drag}
-      className={`w-24 h-24 m-2 flex flex-col items-center justify-center relative ${
-        isDragging ? "opacity-50" : ""
-      }`}
+      className={`w-24 h-24 m-2 flex flex-col items-center justify-center relative group 
+        ${isDragging ? "opacity-50" : ""}`}
       onContextMenu={handleContextMenu}
     >
       <a
         href={bookmark.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="w-16 h-16 bg-gray-500 flex items-center justify-center rounded"
+        className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center rounded-lg shadow-lg hover:bg-opacity-30 transition-all duration-300"
         onClick={(e) => isEditing && e.preventDefault()}
       >
-        <span className="text-2xl">🔖</span>
+        <Bookmark className="h-8 w-8 text-white" />
       </a>
+
       {isEditing ? (
         <input
           type="text"
@@ -75,17 +76,18 @@ export const BookmarkIcon: React.FC<{
           onChange={(e) => setBookmarkTitle(e.target.value)}
           onBlur={handleRename}
           onKeyPress={(e) => e.key === "Enter" && handleRename()}
-          className="w-full text-center mt-1 text-xs"
+          className="w-full mt-2 p-1 text-sm bg-white bg-opacity-20 backdrop-blur-sm rounded focus:outline-none focus:ring-2 focus:ring-white text-white text-center"
           autoFocus
         />
       ) : (
-        <span className="text-xs text-white font-medium mt-1 text-center overflow-hidden">
+        <span className="text-sm text-white font-medium mt-2 text-center overflow-hidden whitespace-nowrap text-ellipsis w-full px-1">
           {bookmark.title}
         </span>
       )}
+
       {showContextMenu && (
         <div
-          className="fixed bg-white border border-gray-300 shadow-md rounded-md py-2 z-50"
+          className="fixed bg-white bg-opacity-90 backdrop-blur-sm border border-gray-200 shadow-lg rounded-lg py-1 z-50"
           style={{ top: contextMenuPosition.y, left: contextMenuPosition.x }}
         >
           <button
@@ -94,9 +96,10 @@ export const BookmarkIcon: React.FC<{
               setIsEditing(true);
               setShowContextMenu(false);
             }}
-            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
           >
-            Rename
+            <Edit className="h-4 w-4" />
+            <span>Rename</span>
           </button>
           <button
             onClick={(e) => {
@@ -104,12 +107,15 @@ export const BookmarkIcon: React.FC<{
               onDelete(bookmark.id);
               setShowContextMenu(false);
             }}
-            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 transition-colors"
           >
-            Delete
+            <Trash2 className="h-4 w-4" />
+            <span>Delete</span>
           </button>
         </div>
       )}
     </div>
   );
 };
+
+export default BookmarkIcon;
