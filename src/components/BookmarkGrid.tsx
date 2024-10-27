@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import { BookmarkIcon } from "./BookmarkIcon";
+import BookmarkIcon from "./BookmarkIcon";
 import AddBookmarkModal from "./AddBookmarkModal";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, BookmarkPlus } from "lucide-react";
 
 interface Bookmark {
   id: string;
@@ -16,20 +16,18 @@ interface BookmarkGridProps {
   onBackToFolders: () => void;
 }
 
-// Include the updated BookmarkIcon component here
-
 const AddBookmarkIcon: React.FC<{ onAddBookmark: () => void }> = ({
   onAddBookmark,
 }) => {
   return (
     <div
-      className="w-24 h-24 m-2 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 rounded"
+      className="w-24 h-24 m-2 flex flex-col items-center justify-center cursor-pointer group"
       onClick={onAddBookmark}
     >
-      <div className="w-16 h-16 bg-blue-200 flex items-center justify-center rounded">
-        <span className="text-2xl">+</span>
+      <div className="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm flex items-center justify-center rounded-lg shadow-lg group-hover:bg-opacity-30 transition-all duration-300">
+        <BookmarkPlus className="h-8 w-8 text-white" />
       </div>
-      <span className="text-xs mt-1 text-center overflow-hidden text-white">
+      <span className="text-sm text-white font-medium mt-2 text-center overflow-hidden">
         Add Bookmark
       </span>
     </div>
@@ -111,15 +109,27 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
   );
 
   return (
-    <div ref={drop} className="flex-1 p-4 w-full overflow-auto">
-      <button
-        onClick={onBackToFolders}
-        className="mb-4 bg-blue-500 text-white p-2 rounded"
-        aria-label="Back to Folders"
-      >
-        <ArrowLeft size={24} />
-      </button>
-      <div className="grid grid-cols-4 gap-4">
+    <div ref={drop} className="flex-1 p-6 w-full overflow-auto">
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={onBackToFolders}
+          className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300 text-white"
+          aria-label="Back to Folders"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="text-sm font-medium">Back to Folders</span>
+        </button>
+
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300 text-white"
+        >
+          <Plus className="h-5 w-5" />
+          <span className="text-sm font-medium">Add Bookmark</span>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {filteredBookmarks.map((bookmark) => (
           <BookmarkIcon
             key={bookmark.id}
@@ -131,6 +141,7 @@ const BookmarkGrid: React.FC<BookmarkGridProps> = ({
         ))}
         <AddBookmarkIcon onAddBookmark={() => setIsAddModalOpen(true)} />
       </div>
+
       <AddBookmarkModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

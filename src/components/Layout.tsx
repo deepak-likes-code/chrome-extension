@@ -185,7 +185,7 @@ const MacOSLayout: React.FC = () => {
               />
             )}
           </div>
-
+          {/* 
           <div className="flex items-center justify-center mt-4">
             <button
               onClick={() => setShowBlocklist(!showBlocklist)}
@@ -195,7 +195,7 @@ const MacOSLayout: React.FC = () => {
             </button>
           </div>
 
-          {showBlocklist && <BlocklistManager />}
+          {showBlocklist && <BlocklistManager />} */}
         </div>
 
         <Timer
