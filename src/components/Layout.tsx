@@ -185,17 +185,6 @@ const MacOSLayout: React.FC = () => {
               />
             )}
           </div>
-          {/* 
-          <div className="flex items-center justify-center mt-4">
-            <button
-              onClick={() => setShowBlocklist(!showBlocklist)}
-              className="px-3 py-3 bg-white text-black rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap text-md"
-            >
-              {showBlocklist ? "Hide Blocklist" : "Show Blocklist"}
-            </button>
-          </div>
-
-          {showBlocklist && <BlocklistManager />} */}
         </div>
 
         <Timer
