@@ -26,8 +26,9 @@ const MacOSLayout: React.FC = () => {
   });
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [timer, setTimer] = useState<TimerState | null>(null);
+  const [activeTimer, setActiveTimer] = useState<TimerState | null>(null);
   const [showBlocklist, setShowBlocklist] = useState(false);
+  const [presetTitle, setPresetTitle] = useState<string | null>(null);
 
   const handleBackgroundChange = useCallback(
     (newBackground: string, isColor: boolean = false) => {
@@ -49,7 +50,7 @@ const MacOSLayout: React.FC = () => {
         setBackground(result.background);
       }
       if (result.timerState) {
-        setTimer(result.timerState);
+        setActiveTimer(result.timerState);
       }
     });
 
@@ -62,7 +63,7 @@ const MacOSLayout: React.FC = () => {
           setRefreshTrigger((prev) => prev + 1);
         }
         if (changes.timerState) {
-          setTimer(changes.timerState.newValue);
+          setActiveTimer(changes.timerState.newValue);
         }
       }
     };
@@ -86,9 +87,10 @@ const MacOSLayout: React.FC = () => {
       endTime,
       isPaused: false,
     };
-    setTimer(newTimerState);
+    setActiveTimer(newTimerState);
     chrome.storage.local.set({ timerState: newTimerState }, () => {
       console.log("Timer state saved");
+      setPresetTitle(null); // Clear the preset title after timer starts
     });
   };
 
@@ -96,48 +98,22 @@ const MacOSLayout: React.FC = () => {
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
     });
-    setTimer(null);
-  };
-
-  const handlePresetTimer = (
-    title: string,
-    hours: number,
-    minutes: number,
-    seconds: number
-  ) => {
-    // Just pre-fill the timer component without starting it
-    if (timer?.title === title) {
-      // If clicking the same todo, clear the timer
-      handleCancelTimer();
-    } else {
-      const presetTimer = {
-        title,
-        // Set a future time but don't start the timer
-        endTime: Date.now() + (hours * 3600 + minutes * 60 + seconds) * 1000,
-        isPaused: true, // Keep it paused initially
-      };
-      setTimer(presetTimer);
-    }
-  };
-
-  const getActiveTimerTitle = () => {
-    if (timer && !timer.isPaused) {
-      return timer.title;
-    }
-    return null;
+    setActiveTimer(null);
+    setPresetTitle(null);
   };
 
   const handleCancelTimer = () => {
     chrome.storage.local.remove("timerState", () => {
       console.log("Timer state cleared");
     });
-    setTimer(null);
+    setActiveTimer(null);
+    setPresetTitle(null);
   };
 
   const handleTimerPause = (isPaused: boolean) => {
-    if (timer) {
-      const updatedTimer = { ...timer, isPaused };
-      setTimer(updatedTimer);
+    if (activeTimer) {
+      const updatedTimer = { ...activeTimer, isPaused };
+      setActiveTimer(updatedTimer);
       chrome.storage.local.set({ timerState: updatedTimer }, () => {
         console.log("Timer pause state updated");
       });
@@ -167,8 +143,8 @@ const MacOSLayout: React.FC = () => {
         <div className="flex w-1/2 flex-col px-2 mt-4 relative z-10">
           <div className="flex flex-col max-h-[50vh]">
             <TodoList
-              onPresetTimer={handlePresetTimer}
-              activeTimerTitle={getActiveTimerTitle()}
+              onPresetTimer={setPresetTitle}
+              activeTimerTitle={activeTimer?.title}
             />
           </div>
           <div className="flex">
@@ -188,7 +164,8 @@ const MacOSLayout: React.FC = () => {
         </div>
 
         <Timer
-          initialTimer={timer}
+          initialTimer={activeTimer}
+          presetTitle={presetTitle}
           onSetTimer={handleSetTimer}
           onTimerEnd={handleTimerEnd}
           onCancel={handleCancelTimer}

@@ -8,12 +8,7 @@ interface Todo {
 }
 
 interface TodoListProps {
-  onPresetTimer?: (
-    title: string,
-    hours: number,
-    minutes: number,
-    seconds: number
-  ) => void;
+  onPresetTimer?: (title: string) => void;
   activeTimerTitle?: string | null;
 }
 
@@ -60,8 +55,7 @@ const TodoList: React.FC<TodoListProps> = ({
 
   const handlePresetTimer = (todo: Todo) => {
     if (onPresetTimer) {
-      // Preset to 25 minutes
-      onPresetTimer(todo.text, 0, 25, 0);
+      onPresetTimer(todo.text);
     }
   };
 
