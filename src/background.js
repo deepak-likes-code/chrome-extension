@@ -38,17 +38,24 @@ function shouldBlockUrl(url, blocklist) {
   }
 
   for (const blockedItem of blocklist) {
-    const blockedBaseDomain = getBaseDomain(blockedItem);
+    const blockedUrl =
+      typeof blockedItem === "string" ? blockedItem : blockedItem.url;
+    const isActive =
+      typeof blockedItem === "string" ? true : blockedItem.isActive;
+
+    if (!isActive) continue;
+
+    const blockedBaseDomain = getBaseDomain(blockedUrl);
 
     if (
-      hostname === blockedItem ||
+      hostname === blockedUrl ||
       baseDomain === blockedBaseDomain ||
-      hostname.endsWith(`.${blockedItem}`) ||
-      blockedItem.endsWith(`.${baseDomain}`)
+      hostname.endsWith(`.${blockedUrl}`) ||
+      blockedUrl.endsWith(`.${baseDomain}`)
     ) {
       console.log(
         "Blocking match found:",
-        blockedItem,
+        blockedUrl,
         "for hostname:",
         hostname
       );
@@ -128,7 +135,12 @@ chrome.runtime.onInstalled.addListener(() => {
         console.log("Initialized empty blocklist");
       });
     } else {
-      console.log("Existing blocklist:", result.blocklist);
+      const updatedBlocklist = result.blocklist.map((item) =>
+        typeof item === "string" ? { url: item, isActive: true } : item
+      );
+      chrome.storage.sync.set({ blocklist: updatedBlocklist }, () => {
+        console.log("Updated blocklist format:", updatedBlocklist);
+      });
     }
   });
 

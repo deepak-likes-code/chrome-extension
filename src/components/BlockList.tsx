@@ -1,20 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Trash2, X } from "lucide-react";
+import { Trash2, X, EyeOff, Eye } from "lucide-react";
 
 interface BlocklistModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface BlockedItem {
+  url: string;
+  isActive: boolean;
+}
+
 const BlocklistModal: React.FC<BlocklistModalProps> = ({ isOpen, onClose }) => {
-  const [blockedItems, setBlockedItems] = useState<string[]>([]);
+  const [blockedItems, setBlockedItems] = useState<BlockedItem[]>([]);
   const [newItem, setNewItem] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       chrome.storage.sync.get(["blocklist"], (result) => {
         if (result.blocklist) {
-          setBlockedItems(result.blocklist);
+          const formattedItems = Array.isArray(result.blocklist)
+            ? result.blocklist.map((url: string | BlockedItem) => {
+                return typeof url === "string" ? { url, isActive: true } : url;
+              })
+            : [];
+          setBlockedItems(formattedItems);
           console.log("Loaded blocklist:", result.blocklist);
         }
       });
@@ -22,8 +32,9 @@ const BlocklistModal: React.FC<BlocklistModalProps> = ({ isOpen, onClose }) => {
   }, [isOpen]);
 
   const addItem = () => {
-    if (newItem && !blockedItems.includes(newItem)) {
-      const updatedList = [...blockedItems, newItem];
+    if (newItem && !blockedItems.some((item) => item.url === newItem)) {
+      const newBlockedItem = { url: newItem, isActive: true };
+      const updatedList = [...blockedItems, newBlockedItem];
       setBlockedItems(updatedList);
       chrome.storage.sync.set({ blocklist: updatedList }, () => {
         console.log("Updated blocklist:", updatedList);
@@ -32,12 +43,20 @@ const BlocklistModal: React.FC<BlocklistModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const removeItem = (item: string) => {
-    const updatedList = blockedItems.filter((blocked) => blocked !== item);
+  const removeItem = (url: string) => {
+    const updatedList = blockedItems.filter((item) => item.url !== url);
     setBlockedItems(updatedList);
     chrome.storage.sync.set({ blocklist: updatedList }, () => {
       console.log("Updated blocklist after removal:", updatedList);
     });
+  };
+
+  const toggleBlock = (url: string) => {
+    const updatedList = blockedItems.map((item) =>
+      item.url === url ? { ...item, isActive: !item.isActive } : item
+    );
+    setBlockedItems(updatedList);
+    chrome.storage.sync.set({ blocklist: updatedList });
   };
 
   if (!isOpen) return null;
@@ -84,12 +103,32 @@ const BlocklistModal: React.FC<BlocklistModalProps> = ({ isOpen, onClose }) => {
               <ul className="space-y-2">
                 {blockedItems.map((item) => (
                   <li
-                    key={item}
-                    className="flex justify-between items-center p-3 bg-gray-50 rounded-lg group"
+                    key={item.url}
+                    className={`flex justify-between items-center p-3 rounded-lg group transition-colors ${
+                      item.isActive
+                        ? "bg-red-50 text-red-700"
+                        : "bg-gray-50 text-gray-700"
+                    }`}
                   >
-                    <span className="text-gray-700">{item}</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => toggleBlock(item.url)}
+                        className={`transition-colors ${
+                          item.isActive
+                            ? "text-red-500 hover:text-red-600"
+                            : "text-gray-400 hover:text-gray-600"
+                        }`}
+                      >
+                        {item.isActive ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                      <span>{item.url}</span>
+                    </div>
                     <button
-                      onClick={() => removeItem(item)}
+                      onClick={() => removeItem(item.url)}
                       className="text-gray-400 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="h-5 w-5" />
