@@ -10,6 +10,24 @@ function getBaseDomain(hostname) {
   return hostname;
 }
 
+export const normalizeUrl = (url) => {
+  try {
+    // Remove protocol, www, and trailing slashes
+    let normalizedUrl = url
+      .toLowerCase()
+      .replace(/^(https?:\/\/)?(www\.)?/, "")
+      .replace(/\/+$/, "");
+
+    // Remove any remaining path or query parameters
+    normalizedUrl = normalizedUrl.split("/")[0];
+
+    return normalizedUrl;
+  } catch (error) {
+    console.error("Error normalizing URL:", error);
+    return url;
+  }
+};
+
 function isSearchEngine(hostname) {
   const searchEngines = ["google", "bing", "yahoo", "duckduckgo", "baidu"];
   return searchEngines.some((engine) => hostname.includes(engine));
@@ -29,7 +47,7 @@ function playNotificationSound() {
 }
 
 function shouldBlockUrl(url, blocklist) {
-  const hostname = url.hostname;
+  const hostname = normalizeUrl(url.hostname);
   const baseDomain = getBaseDomain(hostname);
 
   if (isSearchEngine(hostname)) {
@@ -45,17 +63,18 @@ function shouldBlockUrl(url, blocklist) {
 
     if (!isActive) continue;
 
-    const blockedBaseDomain = getBaseDomain(blockedUrl);
+    const normalizedBlockedUrl = normalizeUrl(blockedUrl);
+    const blockedBaseDomain = getBaseDomain(normalizedBlockedUrl);
 
     if (
-      hostname === blockedUrl ||
+      hostname === normalizedBlockedUrl ||
       baseDomain === blockedBaseDomain ||
-      hostname.endsWith(`.${blockedUrl}`) ||
-      blockedUrl.endsWith(`.${baseDomain}`)
+      hostname.endsWith(`.${normalizedBlockedUrl}`) ||
+      normalizedBlockedUrl.endsWith(`.${baseDomain}`)
     ) {
       console.log(
         "Blocking match found:",
-        blockedUrl,
+        normalizedBlockedUrl,
         "for hostname:",
         hostname
       );

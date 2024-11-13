@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { Shuffle, ShieldOff } from "lucide-react";
+import { createPortal } from "react-dom";
 import BlocklistModal from "./BlockList";
 
 interface BackgroundSelectorProps {
@@ -95,10 +96,14 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
         </button>
       </div>
 
-      <BlocklistModal
-        isOpen={isBlocklistOpen}
-        onClose={() => setIsBlocklistOpen(false)}
-      />
+      {isBlocklistOpen &&
+        createPortal(
+          <BlocklistModal
+            isOpen={isBlocklistOpen}
+            onClose={() => setIsBlocklistOpen(false)}
+          />,
+          document.body
+        )}
     </>
   );
 };
