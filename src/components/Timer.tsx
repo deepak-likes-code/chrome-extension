@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Pause, Play, X } from "react-feather";
+import { Pause, Play, X } from "lucide-react";
 
 interface TimerProps {
   initialTimer: { title: string; endTime: number; isPaused: boolean } | null;
+  presetTitle?: string | null;
   onSetTimer: (
     title: string,
     hours: number,
@@ -16,6 +17,7 @@ interface TimerProps {
 
 const Timer: React.FC<TimerProps> = ({
   initialTimer,
+  presetTitle,
   onSetTimer,
   onTimerEnd,
   onCancel,
@@ -29,10 +31,7 @@ const Timer: React.FC<TimerProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
 
-  const hourRef = useRef<HTMLDivElement>(null);
-  const minuteRef = useRef<HTMLDivElement>(null);
-  const secondRef = useRef<HTMLDivElement>(null);
-
+  // Effect for handling initial timer
   useEffect(() => {
     if (initialTimer) {
       setTitle(initialTimer.title);
@@ -43,6 +42,16 @@ const Timer: React.FC<TimerProps> = ({
       );
     }
   }, [initialTimer]);
+
+  // Effect for handling preset title and default time
+  useEffect(() => {
+    if (presetTitle && !isRunning) {
+      setTitle(presetTitle);
+      setHours(0);
+      setMinutes(25);
+      setSeconds(0);
+    }
+  }, [presetTitle, isRunning]);
 
   const formatTime = (time: number) => {
     const hrs = Math.floor(time / 3600);
@@ -91,6 +100,10 @@ const Timer: React.FC<TimerProps> = ({
     setIsRunning(false);
     setIsPaused(false);
     setTimeLeft(0);
+    setTitle("");
+    setHours(0);
+    setMinutes(0);
+    setSeconds(0);
     onCancel();
   };
 
