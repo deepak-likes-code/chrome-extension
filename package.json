@@ -17,6 +17,7 @@
     "@types/react-dom": "^18.3.0",
     "extract-files": "^13.0.0",
     "heroicons": "^2.1.5",
+    "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
