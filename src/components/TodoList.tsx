@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Clock, Trash2 } from "lucide-react";
+import { TodoListProps,Todo } from "../types/Todo";
 
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
-interface TodoListProps {
-  onPresetTimer?: (title: string) => void;
-  activeTimerTitle?: string | null;
-}
 
 const TodoList: React.FC<TodoListProps> = ({
   onPresetTimer,
@@ -55,7 +46,8 @@ const TodoList: React.FC<TodoListProps> = ({
 
   const handlePresetTimer = (todo: Todo) => {
     if (onPresetTimer) {
-      onPresetTimer(todo.text);
+      // Preset to 25 minutes
+      onPresetTimer(todo.text, 0, 25, 0);
     }
   };
 
