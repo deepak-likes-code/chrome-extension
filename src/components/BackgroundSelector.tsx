@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import { Shuffle, ShieldOff } from "lucide-react";
 import { createPortal } from "react-dom";
 import BlocklistModal from "./BlockList";
+import { wallpapers } from "../utils/wallpapers";
 
 interface BackgroundSelectorProps {
   onBackgroundChange: (newBackground: string, isColor?: boolean) => void;
@@ -11,26 +12,15 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
   onBackgroundChange,
 }) => {
   const [isBlocklistOpen, setIsBlocklistOpen] = useState(false);
-  const pastelColors = [
-    "#FFB3BA",
-    "#BAFFC9",
-    "#BAE1FF",
-    "#FFFFBA",
-    "#FFDFBA",
-    "#E0BBE4",
-    "#D4F0F0",
-    "#FFC6FF",
-    "#DAEAF6",
-    "#FFDAB9",
-  ];
 
-  const [currentColorIndex, setCurrentColorIndex] = useState(0);
+
+  const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
 
   const handleShuffle = useCallback(() => {
-    const newIndex = (currentColorIndex + 1) % pastelColors.length;
-    setCurrentColorIndex(newIndex);
-    onBackgroundChange(pastelColors[newIndex], true);
-  }, [currentColorIndex, onBackgroundChange, pastelColors]);
+    const newIndex = (currentWallpaperIndex + 1) % wallpapers.length;
+    setCurrentWallpaperIndex(newIndex);
+    onBackgroundChange(wallpapers[newIndex], false);
+  }, [currentWallpaperIndex, onBackgroundChange, wallpapers]);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,7 +44,7 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
         <button
           onClick={handleShuffle}
           className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg shadow-lg cursor-pointer hover:bg-opacity-30 transition-all duration-300"
-          title="Shuffle background color"
+          title="Shuffle background wallpaper"
         >
           <Shuffle className="h-5 w-5 text-white" />
         </button>

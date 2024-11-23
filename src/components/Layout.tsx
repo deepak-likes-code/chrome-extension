@@ -22,7 +22,7 @@ interface BackgroundState {
 const MacOSLayout: React.FC = () => {
   const [background, setBackground] = useState<BackgroundState>({
     type: "image",
-    value: "/backgrounds/arriety.jpg",
+    value: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05",
   });
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -154,9 +154,12 @@ const MacOSLayout: React.FC = () => {
                 backgroundImage: `url(${background.value})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                transition: "background-image 0.5s ease-in-out"
               }
             : {
                 backgroundColor: background.value,
+                transition: "background-color 0.5s ease-in-out"
               }
         }
       >
