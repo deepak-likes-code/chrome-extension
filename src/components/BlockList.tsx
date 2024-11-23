@@ -1,35 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Trash2, X, EyeOff, Eye, AlertCircle } from "lucide-react";
+import { BlockedItem,BlocklistModalProps, Notification } from "../types/Blocklist";
+import { normalizeUrl } from "../utils/helpers";
 
-interface BlocklistModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
 
-interface BlockedItem {
-  url: string;
-  isActive: boolean;
-}
-
-interface Notification {
-  message: string;
-  type: "error" | "success";
-}
-
-const normalizeUrl = (url: string): string => {
-  try {
-    let normalizedUrl = url
-      .toLowerCase()
-      .replace(/^(https?:\/\/)?(www\.)?/, "")
-      .replace(/\/+$/, "");
-
-    normalizedUrl = normalizedUrl.split("/")[0];
-    return normalizedUrl;
-  } catch (error) {
-    console.error("Error normalizing URL:", error);
-    return url;
-  }
-};
 
 const BlocklistModal: React.FC<BlocklistModalProps> = ({ isOpen, onClose }) => {
   const [blockedItems, setBlockedItems] = useState<BlockedItem[]>([]);

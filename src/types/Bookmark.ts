@@ -9,3 +9,17 @@ export interface BookmarkGridProps {
     selectedFolder: string | null;
     onBackToFolders: () => void;
 }
+
+
+
+export interface BookmarkGridProps {
+  selectedFolder: string | null;
+  onBackToFolders: () => void;
+}
+
+
+export interface AddBookmarkModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onAdd: (url: string, title: string) => void;
+  }

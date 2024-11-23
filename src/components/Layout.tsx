@@ -5,14 +5,8 @@ import FolderGrid from "./FolderGrid";
 import BookmarkGrid from "./BookmarkGrid";
 import TodoList from "./TodoList";
 import BackgroundSelector from "./BackgroundSelector";
-import BlocklistManager from "./BlockList";
 import Timer from "./Timer";
-
-interface TimerState {
-  title: string;
-  endTime: number;
-  isPaused: boolean;
-}
+import { TimerState } from "../types/Timer";
 
 interface BackgroundState {
   type: "image" | "color";
@@ -27,7 +21,6 @@ const MacOSLayout: React.FC = () => {
   const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [timer, setTimer] = useState<TimerState | null>(null);
-  const [showBlocklist, setShowBlocklist] = useState(false);
 
   const handleBackgroundChange = useCallback(
     (newBackground: string, isColor: boolean = false) => {

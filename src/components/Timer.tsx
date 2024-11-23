@@ -1,18 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Pause, Play, X } from "react-feather";
-
-interface TimerProps {
-  initialTimer: { title: string; endTime: number; isPaused: boolean } | null;
-  onSetTimer: (
-    title: string,
-    hours: number,
-    minutes: number,
-    seconds: number
-  ) => void;
-  onTimerEnd: () => void;
-  onCancel: () => void;
-  onPause: (isPaused: boolean) => void;
-}
+import { TimerProps } from "../types/Timer";
 
 const Timer: React.FC<TimerProps> = ({
   initialTimer,

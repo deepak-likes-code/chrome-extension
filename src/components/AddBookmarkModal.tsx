@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import { X, Link, BookmarkPlus } from "lucide-react";
+import { AddBookmarkModalProps } from "../types/Bookmark";
 
-interface AddBookmarkModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onAdd: (url: string, title: string) => void;
-}
 
 const AddBookmarkModal: React.FC<AddBookmarkModalProps> = ({
   isOpen,

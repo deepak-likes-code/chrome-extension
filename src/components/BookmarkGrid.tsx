@@ -3,18 +3,7 @@ import { useDrag, useDrop } from "react-dnd";
 import BookmarkIcon from "./BookmarkIcon";
 import AddBookmarkModal from "./AddBookmarkModal";
 import { ArrowLeft, Plus, BookmarkPlus } from "lucide-react";
-
-interface Bookmark {
-  id: string;
-  url: string;
-  title: string;
-  folderId: string | null;
-}
-
-interface BookmarkGridProps {
-  selectedFolder: string | null;
-  onBackToFolders: () => void;
-}
+import { Bookmark, BookmarkGridProps } from "../types/Bookmark";
 
 const AddBookmarkIcon: React.FC<{ onAddBookmark: () => void }> = ({
   onAddBookmark,
