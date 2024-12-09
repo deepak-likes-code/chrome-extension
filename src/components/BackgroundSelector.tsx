@@ -1,20 +1,13 @@
 import React, { useCallback, useState } from "react";
-import { Shuffle, ShieldOff, PieChart } from "lucide-react";
+import { Shuffle, ShieldOff, PieChart, User } from "lucide-react";
 import { createPortal } from "react-dom";
 import BlocklistModal from "./BlockList";
 import AnalyticsModal from "./AnalyticsModal";
-import { wallpapers } from "../utils/wallpapers";
-import { useRef,useEffect } from "react";
+import AboutDevModal from "./AboutDev";
+import { useRef, useEffect } from "react";
 
 interface BackgroundSelectorProps {
   onBackgroundChange: (newBackground: string, isColor?: boolean) => void;
-}
-
-interface TooltipButtonProps {
-  onClick?: () => void;
-  tooltip: string;
-  children: React.ReactNode;
-  className?: string;
 }
 
 interface TooltipButtonProps {
@@ -40,9 +33,7 @@ const TooltipButton: React.FC<TooltipButtonProps> = ({
       const buttonRect = buttonRef.current.getBoundingClientRect();
       const tooltipRect = tooltipRef.current.getBoundingClientRect();
       
-      // Check if tooltip would overflow right edge
       const wouldOverflowRight = buttonRect.right + (tooltipRect.width / 2) > window.innerWidth;
-      // Check if tooltip would overflow left edge
       const wouldOverflowLeft = buttonRect.left - (tooltipRect.width / 2) < 0;
 
       if (wouldOverflowRight || wouldOverflowLeft) {
@@ -86,19 +77,26 @@ const TooltipButton: React.FC<TooltipButtonProps> = ({
   );
 };
 
-
 const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
   onBackgroundChange,
 }) => {
+  const [isAboutDevOpen, setIsAboutDevOpen] = useState(false);
   const [isBlocklistOpen, setIsBlocklistOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [currentWallpaperIndex, setCurrentWallpaperIndex] = useState(0);
+
+  const wallpapers = [
+    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05',
+    'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1',
+    'https://images.unsplash.com/photo-1426604966848-d7adac402bff',
+    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e'
+  ];
 
   const handleShuffle = useCallback(() => {
     const newIndex = (currentWallpaperIndex + 1) % wallpapers.length;
     setCurrentWallpaperIndex(newIndex);
     onBackgroundChange(wallpapers[newIndex], false);
-  }, [currentWallpaperIndex, onBackgroundChange]);
+  }, [currentWallpaperIndex, onBackgroundChange, wallpapers]);
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,23 +116,37 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <TooltipButton
           onClick={() => setIsAnalyticsOpen(true)}
-          tooltip="View your screen time insights"
+          tooltip="View analytics"
         >
           <PieChart className="h-5 w-5 text-white" />
         </TooltipButton>
 
         <TooltipButton
+          onClick={() => setIsBlocklistOpen(true)}
+          tooltip="Manage blocked sites"
+        >
+          <ShieldOff className="h-5 w-5 text-white" />
+        </TooltipButton>
+
+        <TooltipButton
+          onClick={() => setIsAboutDevOpen(true)}
+          tooltip="About the developer"
+        >
+          <User className="h-5 w-5 text-white" />
+        </TooltipButton>
+
+        <TooltipButton
           onClick={handleShuffle}
-          tooltip="Change background wallpaper"
+          tooltip="Change background"
         >
           <Shuffle className="h-5 w-5 text-white" />
         </TooltipButton>
 
         <div className="relative">
-          <TooltipButton tooltip="Upload custom background image">
+          <TooltipButton tooltip="Upload custom background">
             <label
               htmlFor="bg-upload"
               className="cursor-pointer"
@@ -163,13 +175,6 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
             className="hidden"
           />
         </div>
-
-        <TooltipButton
-          onClick={() => setIsBlocklistOpen(true)}
-          tooltip="Manage website blocklist"
-        >
-          <ShieldOff className="h-5 w-5 text-white" />
-        </TooltipButton>
       </div>
 
       {isBlocklistOpen &&
@@ -186,6 +191,15 @@ const BackgroundSelector: React.FC<BackgroundSelectorProps> = ({
           <AnalyticsModal
             isOpen={isAnalyticsOpen}
             onClose={() => setIsAnalyticsOpen(false)}
+          />,
+          document.body
+        )}
+
+      {isAboutDevOpen &&
+        createPortal(
+          <AboutDevModal
+            isOpen={isAboutDevOpen}
+            onClose={() => setIsAboutDevOpen(false)}
           />,
           document.body
         )}
