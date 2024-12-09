@@ -1,5 +1,18 @@
 let timerInterval;
 let registeredTabs = new Set();
+let activeTab = {
+  id: null,
+  domain: null,
+  startTime: null
+};
+
+
+let activeTabTracking = {
+  id: null,
+  domain: null,
+  startTime: null,
+  lastUpdate: null
+};
 
 // Helper functions
 function getBaseDomain(hostname) {
@@ -9,6 +22,12 @@ function getBaseDomain(hostname) {
   }
   return hostname;
 }
+
+
+
+
+
+
 
 export const normalizeUrl = (url) => {
   try {
@@ -141,6 +160,28 @@ function startTimerInterval() {
 }
 
 // Initialize extension on installation
+
+// Add these new tab tracking handlers
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  try {
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+    if (tab.url) {
+      handleTabSwitch(tab);
+    }
+  } catch (error) {
+    console.error('Error handling tab activation:', error);
+  }
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url) {
+    handleTabSwitch(tab);
+  }
+});
+
+
+
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "addToBookmarks",
@@ -323,3 +364,96 @@ function logBlocklist() {
     console.log("Current blocklist:", result.blocklist || []);
   });
 }
+
+
+
+async function handleTabSwitch(tab) {
+  // Save time for previous tab if exists
+  if (activeTabTracking.domain && activeTabTracking.startTime) {
+    await saveTimeEntry(
+      activeTabTracking.domain,
+      activeTabTracking.startTime,
+      Date.now()
+    );
+  }
+
+  if (tab.url) {
+    try {
+      const url = new URL(tab.url);
+      const domain = getBaseDomain(url.hostname);
+      
+      activeTabTracking = {
+        id: tab.id,
+        domain: domain,
+        startTime: Date.now(),
+        lastUpdate: Date.now()
+      };
+    } catch (error) {
+      console.error('Error processing URL:', error);
+    }
+  }
+}
+
+// Update your existing saveTimeEntry function
+const saveTimeEntry = async (domain, startTime, endTime) => {
+  const timeSpent = endTime - startTime;
+  if (timeSpent < 1000) return; // Ignore very short visits
+
+  const date = new Date(startTime).toISOString().split('T')[0];
+
+  try {
+    const result = await chrome.storage.local.get(['timeEntries']);
+    const timeEntries = result.timeEntries || [];
+    
+    // Look for existing entry for same domain and date
+    const existingEntryIndex = timeEntries.findIndex(
+      entry => entry.domain === domain && entry.date === date
+    );
+
+    if (existingEntryIndex !== -1) {
+      // Update existing entry
+      timeEntries[existingEntryIndex].duration += timeSpent;
+      timeEntries[existingEntryIndex].lastUpdate = endTime;
+    } else {
+      // Create new entry
+      timeEntries.push({
+        domain,
+        startTime,
+        lastUpdate: endTime,
+        duration: timeSpent,
+        date
+      });
+    }
+
+    // Keep only last 30 days of data
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    const filteredEntries = timeEntries.filter(
+      entry => new Date(entry.date).getTime() > thirtyDaysAgo
+    );
+
+    await chrome.storage.local.set({ timeEntries: filteredEntries });
+  } catch (error) {
+    console.error('Error saving time entry:', error);
+  }
+};
+
+// Add idle detection handler
+chrome.idle.onStateChanged.addListener((state) => {
+  if (state === 'active' && activeTabTracking.domain) {
+    activeTabTracking.lastUpdate = Date.now();
+  } else if (state !== 'active' && activeTabTracking.domain) {
+    saveTimeEntry(
+      activeTabTracking.domain,
+      activeTabTracking.startTime,
+      activeTabTracking.lastUpdate
+    );
+    activeTabTracking = {
+      id: null,
+      domain: null,
+      startTime: null,
+      lastUpdate: null
+    };
+  }
+});
+
+chrome.idle.setDetectionInterval(60);

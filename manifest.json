@@ -8,6 +8,8 @@
     "bookmarks",
     "contextMenus",
     "activeTab",
+    "tabs",
+    "idle",
     "notifications",
     "webNavigation",
     "alarms",

@@ -8,6 +8,7 @@ import BackgroundSelector from "./BackgroundSelector";
 import Timer from "./Timer";
 import { TimerState } from "../types/Timer";
 
+
 interface BackgroundState {
   type: "image" | "color";
   value: string;
@@ -23,6 +24,8 @@ const MacOSLayout: React.FC = () => {
   const [activeTimer, setActiveTimer] = useState<TimerState | null>(null);
   const [showBlocklist, setShowBlocklist] = useState(false);
   const [presetTitle, setPresetTitle] = useState<string | null>(null);
+  const [showTimeTracking, setShowTimeTracking] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const handleBackgroundChange = useCallback(
     (newBackground: string, isColor: boolean = false) => {
@@ -114,6 +117,7 @@ const MacOSLayout: React.FC = () => {
     }
   };
 
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div
@@ -138,26 +142,30 @@ const MacOSLayout: React.FC = () => {
         <div className="w-full"></div>
 
         <div className="flex w-1/2 flex-col px-2 mt-4 relative z-10">
-          <div className="flex flex-col max-h-[50vh]">
-            <TodoList
-              onPresetTimer={setPresetTitle}
-              activeTimerTitle={activeTimer?.title}
-            />
-          </div>
-          <div className="flex">
-            {selectedFolder === null ? (
-              <FolderGrid
-                onSelectFolder={setSelectedFolder}
-                key={refreshTrigger}
-              />
-            ) : (
-              <BookmarkGrid
-                selectedFolder={selectedFolder}
-                onBackToFolders={() => setSelectedFolder(null)}
-                key={refreshTrigger}
-              />
-            )}
-          </div>
+          
+        
+            <>
+              <div className="flex flex-col max-h-[50vh]">
+                <TodoList
+                  onPresetTimer={setPresetTitle}
+                  activeTimerTitle={activeTimer?.title}
+                />
+              </div>
+              <div className="flex">
+                {selectedFolder === null ? (
+                  <FolderGrid
+                    onSelectFolder={setSelectedFolder}
+                    key={refreshTrigger}
+                  />
+                ) : (
+                  <BookmarkGrid
+                    selectedFolder={selectedFolder}
+                    onBackToFolders={() => setSelectedFolder(null)}
+                    key={refreshTrigger}
+                  />
+                )}
+              </div>
+            </>
         </div>
 
         <Timer
@@ -172,9 +180,14 @@ const MacOSLayout: React.FC = () => {
         <div className="fixed bottom-4 right-4 flex items-center space-x-8 z-10">
           <BackgroundSelector onBackgroundChange={handleBackgroundChange} />
         </div>
+
+
+
+
       </div>
     </DndProvider>
   );
 };
+
 
 export default MacOSLayout;
