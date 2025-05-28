@@ -1,54 +1,60 @@
 {
   "manifest_version": 3,
-  "name": "New Tab with Blocklist",
-  "version": "1.0",
-  "description": "A new tab page with todo list, bookmark manager, and website blocker",
-  "permissions": [
-    "storage",
-    "bookmarks",
-    "contextMenus",
-    "activeTab",
-    "tabs",
-    "idle",
-    "notifications",
-    "webNavigation",
-    "alarms",
-    "scripting",
-    "tts"
-  ],
-  "host_permissions": ["<all_urls>"],
+
+  "name": "Floez – Productive New Tab",
+  "description": "Minimal new-tab dashboard with to-dos, site blocking, Pomodoro timer and browsing analytics.",
+  "version": "1.1.0",
+
+  "icons": {
+    "16":  "icons/icon16.png",
+    "32":  "icons/icon32.png",
+    "48":  "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-  "background": {
-    "service_worker": "background.js"
-  },
+
   "action": {
+    "default_title": "FocusWave",
     "default_popup": "index.html"
   },
+
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+
   "content_scripts": [
     {
       "matches": [
-        "*://www.google.com/search*",
-        "*://www.bing.com/search*",
-        "*://search.yahoo.com/search*",
-        "*://duckduckgo.com/*",
-        "*://www.baidu.com/s*"
+        "https://www.google.com/*",
+        "https://duckduckgo.com/*",
+        "https://www.bing.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_end"
     }
   ],
-  "icons": {
-    "16": "icons/icon16.png",
-    "32": "icons/icon32.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["blocked.html", "audio/notification.wav"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+
+  "permissions": [
+    "storage",
+    "bookmarks",
+    "contextMenus",
+    "tabs",
+    "idle",
+    "notifications",
+    "webNavigation",
+    "alarms",
+    "tts"
+  ],
+
+  "host_permissions": [
+    "*://*.facebook.com/*",
+    "*://*.instagram.com/*",
+    "*://*.twitter.com/*"
+  ],
+
+  "minimum_chrome_version": "114"
 }

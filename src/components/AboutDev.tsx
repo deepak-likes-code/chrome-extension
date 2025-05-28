@@ -37,7 +37,7 @@ const AboutDevModal: React.FC<AboutDevModalProps> = ({ isOpen, onClose }) => {
 
         <div className="flex items-center justify-start gap-4 pt-4 border-t border-gray-200">
           <a
-            href="https://github.com/yourusername/focus-tab"
+            href="https://github.com/deepak-likes-code"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -48,7 +48,7 @@ const AboutDevModal: React.FC<AboutDevModalProps> = ({ isOpen, onClose }) => {
             <span>GitHub</span>
           </a>
           <a
-            href="https://twitter.com/yourusername"
+            href="https://x.com/0xdeepak_eth"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -59,7 +59,7 @@ const AboutDevModal: React.FC<AboutDevModalProps> = ({ isOpen, onClose }) => {
             <span>Twitter</span>
           </a>
           <a
-            href="https://buymeacoffee.com/yourusername"
+            href="https://buymeacoffee.com/deepakkommp"
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 bg-[#FFDD00] text-gray-900 rounded-md font-medium hover:bg-[#FFDD00]/90 transition-colors"
