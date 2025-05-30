@@ -40,7 +40,6 @@
 
   "permissions": [
     "storage",
-    "bookmarks",
     "contextMenus",
     "tabs",
     "idle",
