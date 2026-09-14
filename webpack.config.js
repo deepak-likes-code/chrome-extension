@@ -5,12 +5,14 @@ const CopyPlugin = require("copy-webpack-plugin");
 module.exports = {
   entry: {
     main: "./src/index.tsx",
-    background: "./src/background.js",
-    content: "./src/content.js",
+    background: "./src/service-worker.ts",
+    sidepanel: "./src/sidepanel.tsx",
+    blocked: "./src/blocked.ts",
   },
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "[name].js",
+    clean: true,
   },
   module: {
     rules: [
@@ -33,15 +35,20 @@ module.exports = {
       template: path.resolve(__dirname, "public", "index.html"),
       chunks: ["main"],
     }),
+    new HtmlWebpackPlugin({
+      filename: "sidepanel.html",
+      template: path.resolve(__dirname, "public", "sidepanel.html"),
+      chunks: ["sidepanel"],
+    }),
     new CopyPlugin({
       patterns: [
         { from: "manifest.json", to: "manifest.json" },
         { from: "icons", to: "icons" },
-        { from: "audio", to: "audio" },
+        { from: "public/background/focustab-scottish-valley.jpg", to: "background/focustab-scottish-valley.jpg" },
         { from: "src/blocked.html", to: "blocked.html" },
       ],
     }),
   ],
   mode: "development",
-  devtool: "inline-source-map",
+  devtool: false,
 };

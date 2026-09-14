@@ -1,53 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Clock, Trash2 } from "lucide-react";
-import { TodoListProps,Todo } from "../types/Todo";
+import { TodoListProps } from "../types/Todo";
+import { FocusTask } from "../types/Focus";
+import { useFocusTasks } from "../hooks/useFocusTasks";
 
 
 const TodoList: React.FC<TodoListProps> = ({
   onPresetTimer,
   activeTimerTitle,
 }) => {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const { tasks: todos, addTask, toggleTask, deleteTask } = useFocusTasks();
   const [newTodo, setNewTodo] = useState("");
-
-  useEffect(() => {
-    chrome.storage.local.get(["todos"], (result) => {
-      if (result.todos) {
-        setTodos(result.todos);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    chrome.storage.local.set({ todos });
-  }, [todos]);
 
   const addTodo = () => {
     if (newTodo.trim()) {
-      setTodos([
-        ...todos,
-        { id: Date.now().toString(), text: newTodo, completed: false },
-      ]);
+      addTask(newTodo);
       setNewTodo("");
     }
   };
 
-  const toggleTodo = (id: string) => {
-    setTodos(
-      todos.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
-    );
-  };
-
-  const deleteTodo = (id: string) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
-  };
-
-  const handlePresetTimer = (todo: Todo) => {
+  const handlePresetTimer = (todo: FocusTask) => {
     if (onPresetTimer) {
       // Preset to 25 minutes
-      onPresetTimer(todo.text, 0, 25, 0);
+      onPresetTimer(todo.title, 0, 25, 0);
     }
   };
 
@@ -74,29 +49,29 @@ const TodoList: React.FC<TodoListProps> = ({
           <li
             key={todo.id}
             className={`flex items-center p-4 rounded-lg mr-2 transition-all duration-200 ${
-              activeTimerTitle === todo.text
+              activeTimerTitle === todo.title
                 ? "bg-blue-100 border-2 border-blue-300"
                 : "bg-gray-100"
             }`}
           >
             <input
               type="checkbox"
-              checked={todo.completed}
-              onChange={() => toggleTodo(todo.id)}
+              checked={todo.status === "done"}
+              onChange={() => toggleTask(todo.id)}
               className="mr-4 w-6 h-6"
             />
             <span
               className={`flex-grow text-md ${
-                todo.completed ? "line-through text-gray-500" : "text-gray-800"
+                todo.status === "done" ? "line-through text-gray-500" : "text-gray-800"
               }`}
             >
-              {todo.text}
+              {todo.title}
             </span>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => handlePresetTimer(todo)}
                 className={`p-2 rounded-full transition duration-200 ${
-                  activeTimerTitle === todo.text
+                  activeTimerTitle === todo.title
                     ? "bg-blue-500 text-white"
                     : "text-gray-500 hover:text-blue-500"
                 }`}
@@ -105,7 +80,7 @@ const TodoList: React.FC<TodoListProps> = ({
                 <Clock className="w-5 h-5" />
               </button>
               <button
-                onClick={() => deleteTodo(todo.id)}
+                onClick={() => deleteTask(todo.id)}
                 className="p-2 rounded-full text-gray-500 hover:text-red-500 transition duration-200"
                 title="Delete Todo"
               >

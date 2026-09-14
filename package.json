@@ -1,10 +1,12 @@
 {
-  "name": "todolist-bookmark",
-  "version": "1.0.0",
-  "description": "",
+  "name": "focustab",
+  "version": "1.1.0",
+  "description": "A local-first focus and browser organisation extension for Chromium browsers.",
   "main": "index.js",
   "scripts": {
     "build": "webpack --mode production",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && npm run build",
     "dev": "node hot-reload.js"
   },
   "keywords": [],

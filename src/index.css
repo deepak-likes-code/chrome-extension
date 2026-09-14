@@ -1,3 +1,146 @@
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
+
+html, body, #root { width: 100%; min-height: 100%; margin: 0; }
+body { background: #101916; color: white; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid rgba(116, 232, 182, .9); outline-offset: 2px; }
+.settings-disclosure > summary::-webkit-details-marker { display: none; }
+
+@layer components {
+  .glass-panel {
+    @apply rounded-[17px] border text-white;
+    border-color: rgba(255, 255, 255, 0.20);
+    background: linear-gradient(145deg, rgba(58, 63, 54, 0.70), rgba(22, 29, 24, 0.72));
+    backdrop-filter: blur(20px) saturate(115%);
+    -webkit-backdrop-filter: blur(20px) saturate(115%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 12px 30px rgba(0, 0, 0, 0.20);
+  }
+
+  .glass-pill {
+    @apply rounded-full border border-white/15 text-white;
+    background: linear-gradient(145deg, rgba(62, 66, 56, .72), rgba(30, 36, 30, .72));
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 8px 22px rgba(0,0,0,.16);
+  }
+
+  .glass-btn-active {
+    background: linear-gradient(180deg, rgba(108, 226, 172, .38), rgba(48, 152, 106, .42));
+    border: 1px solid rgba(112, 242, 187, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase text-white/60;
+    letter-spacing: 0.34em;
+  }
+
+  .mint-button {
+    @apply rounded-[16px] font-semibold text-white transition;
+    background: linear-gradient(180deg, #69dda9 0%, #45b982 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 10px 24px rgba(17, 92, 61, .22);
+  }
+
+  .mint-button:hover { filter: brightness(1.05); }
+
+  .screen-title {
+    @apply font-semibold tracking-[-0.035em] text-white;
+    text-shadow: 0 2px 14px rgba(0,0,0,.22);
+  }
+
+  .subtle-divider { border-color: rgba(255,255,255,.12); }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
+
+/* Keep the reference composition intact on shorter laptop windows without
+   forcing the user to zoom the whole browser. */
+@media (min-width: 960px) and (max-height: 720px) {
+  .reference-responsive {
+    width: 125%;
+    height: 125%;
+    margin-left: -12.5%;
+    zoom: 0.8;
+  }
+
+  .focus-stats {
+    margin-top: 0.75rem !important;
+  }
+
+  .focus-screen {
+    padding-top: 82px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .focus-timer-block {
+    margin-top: 0 !important;
+  }
+
+  .focus-timer-ring {
+    width: 240px !important;
+    height: 240px !important;
+  }
+
+  .focus-timer-value {
+    font-size: 52px !important;
+  }
+
+  .focus-durations {
+    margin-top: 0 !important;
+  }
+
+  .focus-task-shell {
+    margin-top: 10px !important;
+  }
+
+  .focus-task-shell > button {
+    height: 48px !important;
+  }
+
+  .focus-actions {
+    margin-top: 8px !important;
+  }
+
+  .focus-actions > button {
+    height: 44px !important;
+  }
+
+  .focus-stats {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+}
+
+@media (min-width: 980px) and (max-height: 720px) {
+  .focus-main {
+    grid-template-columns: minmax(0, 1fr) 370px !important;
+    gap: 44px !important;
+  }
+}
+
+@media (max-width: 979px) {
+  .focus-aside {
+    margin-top: 8px;
+  }
+
+  .focus-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .focus-stats > div {
+    border-left: 0 !important;
+  }
+}
