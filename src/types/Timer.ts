@@ -15,4 +15,12 @@ export interface TimerProps {
     title: string;
     endTime: number;
     isPaused: boolean;
+    isCompleted?: boolean;
+    taskId?: string | null;
+    plannedMinutes?: number;
+    status?: "focus" | "break";
+    sessionId?: string;
+    startedAt?: number;
+    pausedMs?: number;
+    pauseStartedAt?: number | null;
   }

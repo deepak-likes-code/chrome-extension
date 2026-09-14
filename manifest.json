@@ -1,22 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "New Tab with Blocklist",
-  "version": "1.0",
-  "description": "A new tab page with todo list, bookmark manager, and website blocker",
+  "name": "FocusTab",
+  "version": "1.1.0",
+  "description": "A calmer browser for focused work, recoverable workspaces, and fast search.",
   "permissions": [
     "storage",
-    "bookmarks",
     "contextMenus",
     "activeTab",
     "tabs",
-    "idle",
-    "notifications",
-    "webNavigation",
+    "tabGroups",
+    "sessions",
     "alarms",
-    "scripting",
-    "tts"
+    "sidePanel",
+    "declarativeNetRequestWithHostAccess"
   ],
-  "host_permissions": ["<all_urls>"],
+  "optional_permissions": [
+    "bookmarks",
+    "history",
+    "browsingData"
+  ],
+  "optional_host_permissions": ["http://*/*", "https://*/*"],
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
@@ -24,21 +27,11 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "index.html"
+    "default_title": "Open FocusTab side panel"
   },
-  "content_scripts": [
-    {
-      "matches": [
-        "*://www.google.com/search*",
-        "*://www.bing.com/search*",
-        "*://search.yahoo.com/search*",
-        "*://duckduckgo.com/*",
-        "*://www.baidu.com/s*"
-      ],
-      "js": ["content.js"],
-      "run_at": "document_end"
-    }
-  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -47,8 +40,17 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["blocked.html", "audio/notification.wav"],
-      "matches": ["<all_urls>"]
+      "resources": ["blocked.html", "blocked.js"],
+      "matches": ["http://*/*", "https://*/*"]
     }
-  ]
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "Command+Shift+K"
+      },
+      "description": "Open FocusTab side panel"
+    }
+  }
 }

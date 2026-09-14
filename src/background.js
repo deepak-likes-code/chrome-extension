@@ -137,6 +137,20 @@ function updateTimer() {
   chrome.storage.local.get(["timerState"]).then((result) => {
     const timerState = result.timerState;
     if (timerState && !timerState.isCompleted) {
+      // Respect pause: freeze countdown while paused
+      if (timerState.isPaused) {
+        const remaining =
+          timerState.remainingMs != null
+            ? timerState.remainingMs
+            : Math.max(0, timerState.endTime - Date.now());
+        sendMessageToAllTabs({
+          action: "updateTimer",
+          timeLeft: Math.max(0, remaining),
+          isPaused: true,
+          isCompleted: false,
+        });
+        return;
+      }
       const timeLeft = timerState.endTime - Date.now();
       if (timeLeft <= 0) {
         timerState.isCompleted = true;
@@ -343,6 +357,27 @@ chrome.webNavigation.onBeforeNavigate.addListener((details) => {
         chrome.storage.sync.set({ blockedSites }, () => {
           console.log("Updated blockedSites:", blockedSites);
         });
+
+        // Record dated blocked event for Focus stats / Insights (local-first)
+        // and bump active session distraction count when in focus.
+        try {
+          chrome.storage.local.get(["blockedEvents", "timerState"], (localRes) => {
+            const events = localRes.blockedEvents || [];
+            events.push({
+              hostname: url.hostname,
+              url: details.url,
+              date: new Date().toISOString(),
+            });
+            chrome.storage.local.set({ blockedEvents: events.slice(-500) });
+            const ts = localRes.timerState;
+            if (ts && !ts.isCompleted && !ts.isPaused) {
+              ts.distractionCount = (ts.distractionCount || 0) + 1;
+              chrome.storage.local.set({ timerState: ts });
+            }
+          });
+        } catch (e) {
+          console.error("Failed to record blocked event", e);
+        }
 
         chrome.tabs.update(details.tabId, {
           url: chrome.runtime.getURL(

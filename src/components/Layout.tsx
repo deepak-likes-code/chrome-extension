@@ -1,193 +1,61 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
-import FolderGrid from "./FolderGrid";
-import BookmarkGrid from "./BookmarkGrid";
-import TodoList from "./TodoList";
-import BackgroundSelector from "./BackgroundSelector";
-import Timer from "./Timer";
-import { TimerState } from "../types/Timer";
+import React, { useCallback, useEffect, useState } from "react";
+import Header from "./shell/Header";
+import GlobalSearch from "./shell/GlobalSearch";
+import SettingsModal from "./shell/SettingsModal";
+import FocusView from "./focus/FocusView";
+import WorkspacesView from "./workspaces/WorkspacesView";
+import InsightsView from "./insights/InsightsView";
+import SavedView from "./saved/SavedView";
+import { AppTab } from "../types/Focus";
+import { wallpapers } from "../utils/wallpapers";
 
+interface BackgroundState { type: "image" | "color"; value: string; }
 
-interface BackgroundState {
-  type: "image" | "color";
-  value: string;
-}
+const DEFAULT_BACKGROUND = chrome.runtime.getURL("background/focustab-scottish-valley.jpg");
 
 const MacOSLayout: React.FC = () => {
-  const [background, setBackground] = useState<BackgroundState>({
-    type: "image",
-    value: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05",
-  });
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [activeTimer, setActiveTimer] = useState<TimerState | null>(null);
-  const [showBlocklist, setShowBlocklist] = useState(false);
-  const [presetTitle, setPresetTitle] = useState<string | null>(null);
-  const [showTimeTracking, setShowTimeTracking] = useState(false);
-  const [showAnalytics, setShowAnalytics] = useState(false);
-
-  const handleBackgroundChange = useCallback(
-    (newBackground: string, isColor: boolean = false) => {
-      const backgroundState: BackgroundState = {
-        type: isColor ? "color" : "image",
-        value: newBackground,
-      };
-      setBackground(backgroundState);
-      chrome.storage.local.set({ background: backgroundState }, () => {
-        console.log("Background saved");
-      });
-    },
-    []
-  );
+  const [background, setBackground] = useState<BackgroundState>({ type: "image", value: DEFAULT_BACKGROUND });
+  const [activeTab, setActiveTab] = useState<AppTab>("focus");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
-    chrome.storage.local.get(["background", "timerState"], (result) => {
-      if (result.background) {
-        setBackground(result.background);
-      }
-      if (result.timerState) {
-        setActiveTimer(result.timerState);
-      }
+    chrome.storage.local.get(["background", "visualRefreshSep12"], (result) => {
+      if (!result.visualRefreshSep12) {
+        const next = { type: "image", value: DEFAULT_BACKGROUND } as BackgroundState;
+        setBackground(next);
+        chrome.storage.local.set({ background: next, visualRefreshSep12: true });
+      } else if (result.background) setBackground(result.background);
     });
-
-    const handleStorageChange = (
-      changes: { [key: string]: chrome.storage.StorageChange },
-      areaName: string
-    ) => {
-      if (areaName === "local") {
-        if (changes.bookmarks || changes.folders) {
-          setRefreshTrigger((prev) => prev + 1);
-        }
-        if (changes.timerState) {
-          setActiveTimer(changes.timerState.newValue);
-        }
-      }
-    };
-
-    chrome.storage.onChanged.addListener(handleStorageChange);
-
-    return () => {
-      chrome.storage.onChanged.removeListener(handleStorageChange);
-    };
   }, []);
 
-  const handleSetTimer = (
-    title: string,
-    hours: number,
-    minutes: number,
-    seconds: number
-  ) => {
-    const endTime = Date.now() + (hours * 3600 + minutes * 60 + seconds) * 1000;
-    const newTimerState: TimerState = {
-      title,
-      endTime,
-      isPaused: false,
-    };
-    setActiveTimer(newTimerState);
-    chrome.storage.local.set({ timerState: newTimerState }, () => {
-      console.log("Timer state saved");
-      setPresetTitle(null); // Clear the preset title after timer starts
-    });
-  };
+  const navigate = useCallback((tab: AppTab) => {
+    setActiveTab(tab);
+  }, []);
 
-  const handleTimerEnd = () => {
-    chrome.storage.local.remove("timerState", () => {
-      console.log("Timer state cleared");
-    });
-    setActiveTimer(null);
-    setPresetTitle(null);
-  };
-
-  const handleCancelTimer = () => {
-    chrome.storage.local.remove("timerState", () => {
-      console.log("Timer state cleared");
-    });
-    setActiveTimer(null);
-    setPresetTitle(null);
-  };
-
-  const handleTimerPause = (isPaused: boolean) => {
-    if (activeTimer) {
-      const updatedTimer = { ...activeTimer, isPaused };
-      setActiveTimer(updatedTimer);
-      chrome.storage.local.set({ timerState: updatedTimer }, () => {
-        console.log("Timer pause state updated");
-      });
-    }
-  };
-
+  const shuffle = useCallback(() => {
+    const current = wallpapers.indexOf(background.value);
+    const next = wallpapers[(current + 1 + wallpapers.length) % wallpapers.length] || DEFAULT_BACKGROUND;
+    const value: BackgroundState = { type: "image", value: next };
+    setBackground(value);
+    chrome.storage.local.set({ background: value });
+  }, [background.value]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <div
-        className="h-screen w-screen overflow-hidden flex justify-stretch relative"
-        style={
-          background.type === "image"
-            ? {
-                backgroundImage: `url(${background.value})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-                transition: "background-image 0.5s ease-in-out"
-              }
-            : {
-                backgroundColor: background.value,
-                transition: "background-color 0.5s ease-in-out"
-              }
-        }
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-50 pointer-events-none"></div>
-
-        <div className="w-full"></div>
-
-        <div className="flex w-1/2 flex-col px-2 mt-4 relative z-10">
-          
-        
-            <>
-              <div className="flex flex-col max-h-[50vh]">
-                <TodoList
-                  onPresetTimer={setPresetTitle}
-                  activeTimerTitle={activeTimer?.title}
-                />
-              </div>
-              <div className="flex">
-                {selectedFolder === null ? (
-                  <FolderGrid
-                    onSelectFolder={setSelectedFolder}
-                    key={refreshTrigger}
-                  />
-                ) : (
-                  <BookmarkGrid
-                    selectedFolder={selectedFolder}
-                    onBackToFolders={() => setSelectedFolder(null)}
-                    key={refreshTrigger}
-                  />
-                )}
-              </div>
-            </>
-        </div>
-
-        <Timer
-          initialTimer={activeTimer}
-          presetTitle={presetTitle}
-          onSetTimer={handleSetTimer}
-          onTimerEnd={handleTimerEnd}
-          onCancel={handleCancelTimer}
-          onPause={handleTimerPause}
-        />
-
-        <div className="fixed bottom-4 right-4 flex items-center space-x-8 z-10">
-          <BackgroundSelector onBackgroundChange={handleBackgroundChange} />
-        </div>
-
-
-
-
-      </div>
-    </DndProvider>
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#12201b]" style={background.type === "image" ? { backgroundImage: `url(${background.value})`, backgroundSize: "cover", backgroundPosition: "center" } : { backgroundColor: background.value }}>
+      <div className="pointer-events-none absolute inset-0 bg-[rgba(3,9,7,.46)]" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#06243a]/30 via-transparent to-black/25" />
+      <Header active={activeTab} onNavigate={navigate} onOpenSettings={() => setSettingsOpen(true)} onOpenSearch={() => setSearchOpen(true)} onShuffle={shuffle} />
+      <main className="relative z-10 min-h-0 flex-1">
+        {activeTab === "focus" && <FocusView />}
+        {activeTab === "workspaces" && <WorkspacesView />}
+        {activeTab === "saved" && <SavedView />}
+        {activeTab === "insights" && <InsightsView />}
+      </main>
+      <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} onNavigate={navigate} />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} onShuffle={shuffle} />
+    </div>
   );
 };
-
 
 export default MacOSLayout;
